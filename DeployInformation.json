@@ -1,0 +1,326 @@
+{
+  "DeployFactory": "0xFaC897544659Fb136C064d5428947f5BC9cC1Fa2",
+  "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "OracleAdapter": {
+    "1": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "USDTPriceFeed": "0x3e7d1eab13ad0104d2750b8863b489d65364e32d",
+      "USDCPriceFeed": "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6",
+      "NativeTokenPriceFeed": "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
+    },
+    "10": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "USDTPriceFeed": "0xecef79e109e997bca29c1c0897ec9d7b03647f5e",
+      "USDCPriceFeed": "0x16a9fa2fda030272ce99b29cf780dfa30361e0f3",
+      "NativeTokenPriceFeed": "0x13e3ee699d1909e989722e753853ae30b17e08c5"
+    },
+    "56": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+      "USDTPriceFeed": "0xb97ad0e74fa7d920791e90258a6e2085088b4320",
+      "USDCPriceFeed": "0x51597f405303c4377e36123cbc172b13269ea163",
+      "NativeTokenPriceFeed": "0x0567f2323251f0aab15c8dfb1967e4e8a7d42aee"
+    },
+    "66": {
+      "contractType": "EXOracleAdapter",
+      "oracleAddress": "0xF77596928f0823959c2caF4810834FD227244871",
+      "dataSorce": "0x8B83D77C1584e9E1D81d3172608c045E6E5876e5",
+      "USDTOracleDecimals": "6",
+      "USDCOracleDecimals": "6",
+      "NativeTokenOracleDecimals": "6",
+      "USDTOracleDataType": "USDT",
+      "USDCOracleDataType": "USDC",
+      "NativeTokenOracleDataType": "OKT"
+    },
+    "137": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "USDTPriceFeed": "0x0a6513e40db6eb1b165753ad52e80663aea50545",
+      "USDCPriceFeed": "0xfe4a8cc5b5b2366c1b58bea3858e81843581b2f7",
+      "NativeTokenPriceFeed": "0xab594600376ec9fd91f8e885dadf0ce036862de0"
+    },
+    "31337": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xc97b81B8a38b9146010Df85f1Ac714aFE1554343"
+    },
+    "42161": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "USDTPriceFeed": "0x3f3f5df88dc9f13eac63df89ec16ef6e7e25dde7",
+      "USDCPriceFeed": "0x50834f3163758fcc1df9973b6e91f0f0f0434ad3",
+      "NativeTokenPriceFeed": "0x639fe6ab55c921f74e7fac1ee960c0b6293ba612"
+    },
+    "43114": {
+      "contractType": "ChainlinkOracleAdapter",
+      "swapRouter": "0xE3Ffc583dC176575eEA7FD9dF2A7c65F7E23f4C3",
+      "USDTPriceFeed": "0xebe676ee90fe1112671f19b6b7459bc678b67e8a",
+      "USDCPriceFeed": "0xf096872672f44d6eba71458d74fe67f9a77a23b9",
+      "NativeTokenPriceFeed": "0x0a77230d17318075983913bc2145db16c7366156"
+    },
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  },
+  "UserOperationHelper": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  },
+  "SmartAccountProxyFactory": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  },
+  "BundlerDepositHelper": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  },
+  "EntryPoint": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e",
+    "bundlers": [
+      "0x794b93902449c524c3158f9e101204ecb2057f2e",
+      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "0x7da47793840ea85b5954edd71b5b51e0959be32c",
+      "0xc0be04dc45c351d4b8c8df12ffca6c390e969197",
+      "0xfa038613acf0dc54d59938ec8e3b3c1f5b9bd5ae",
+      "0x713e95f512e79d2d2cad02afb2ab4bf966f36ecd",
+      "0x26ced4fc889d52210bd14af3bda90f7e36d10725",
+      "0x7306816dc3d255bda2563d2b9953c85c4fce6047",
+      "0xe6271a215adc5ffe474364c52df928acfd1bbc93",
+      "0x26175c53f0a581a088fece010f9207ce5d56fd6b",
+      "0x82e934af5268aa9c3977346c92233e80a2be9441",
+      "0x2df993cd76bb8dbda50546eef00eee2e6331a2c8",
+      "0x12a39672ae8ae8e87e12a5de53c34690d830365c",
+      "0x41fc92d7075a16c4cb4954a36b42808008e01986",
+      "0x25f99f1f73e1274425af0ea55f1074e4246c42f8",
+      "0xb6baa6407de98c47648ad634498092ff3482fd06",
+      "0x9983b2a2d9aec03912cc5759256cf49b00ecf71b",
+      "0x4bdd91585d1c97fd0ee4062ca59a66c50cb95077",
+      "0xc269537f89fca9ea47403f8ee834e104ffe7d157",
+      "0x9a1f77bd9fdd63e05190baea9dbf60bafd1b9e12",
+      "0xd6b6e001df9ce9b4a6eccff41fbcd1c740cd5d22",
+      "0x7656cd5fe29dea0f025976ba9bf64855666e096b",
+      "0xd82ba0b9df365f7d332653d3a96b2a0ad8f36354",
+      "0x4a135db5200b1f0a04defc804011af372471fd04",
+      "0x50c2b7236a2be8b5046f4a5d49db091047ee0cbe"
+    ]
+  },
+  "TokenPaymaster": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e",
+    "verifyingSigner": "0x241a4e0b1b1c9248bfdae99d08a21b803b026b11",
+    "whiteList": ["0x794b93902449c524c3158f9e101204ecb2057f2e"]
+  },
+  "FreeGasPaymaster": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e",
+    "verifyingSigner": "0x241a4e0b1b1c9248bfdae99d08a21b803b026b11",
+    "whiteList": ["0x794b93902449c524c3158f9e101204ecb2057f2e"]
+  },
+  "SmartAccount": {
+    "name": "SA",
+    "version": "1.0.0"
+  },
+  "SmartAccountProxyFactory": {
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  },
+  "USDT": {
+    "1": {
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "10": {
+      "address": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "56": {
+      "address": "0x55d398326f99059ff775485246999027b3197955",
+      "minPrice": "30",
+      "maxPrice": "1920",
+      "decimal": "18"
+    },
+    "66": {
+      "address": "0x382bb369d343125bfb2117af9c149795c6c65c50",
+      "minPrice": "1.875",
+      "maxPrice": "120",
+      "decimal": "18"
+    },
+    "137": {
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "minPrice": "0.09625",
+      "maxPrice": "6.16",
+      "decimal": "6"
+    },
+    "31337": {
+      "address": "0x382bb369d343125bfb2117af9c149795c6c65c50",
+      "minPrice": "1.875",
+      "maxPrice": "120",
+      "decimal": "18"
+    },
+    "42161": {
+      "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "43114": {
+      "address": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+      "minPrice": "1.75",
+      "maxPrice": "112",
+      "decimal": "6"
+    }
+  },
+  "USDC": {
+    "1": {
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "10": {
+      "address": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "56": {
+      "address": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+      "minPrice": "30",
+      "maxPrice": "1920",
+      "decimal": "18"
+    },
+    "66": {
+      "address": "0xc946daf81b08146b1c7a8da2a851ddf2b3eaaf85",
+      "minPrice": "1.875",
+      "maxPrice": "120",
+      "decimal": "18"
+    },
+    "137": {
+      "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "minPrice": "0.09625",
+      "maxPrice": "6.16",
+      "decimal": "6"
+    },
+    "31337": {
+      "address": "0x382bb369d343125bfb2117af9c149795c6c65c50",
+      "minPrice": "1.875",
+      "maxPrice": "120",
+      "decimal": "18"
+    },
+    "42161": {
+      "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "minPrice": "475",
+      "maxPrice": "7600",
+      "decimal": "6"
+    },
+    "43114": {
+      "address": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+      "minPrice": "1.75",
+      "maxPrice": "112",
+      "decimal": "6"
+    }
+  },
+  "SwapHelper": {
+    "1": {
+      "contractType": "UniSwapV3Adapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "paths": {
+        "USDT": [
+          "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        ],
+        "USDC": [
+          "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        ]
+      }
+    },
+    "10": {
+      "contractType": "UniSwapV3Adapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "paths": {
+        "USDT": [
+          "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+          "0x4200000000000000000000000000000000000006"
+        ],
+        "USDC": [
+          "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+          "0x4200000000000000000000000000000000000006"
+        ]
+      }
+    },
+    "56": {
+      "contractType": "UniSwapV2Adapter",
+      "swapRouter": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+      "paths": {
+        "USDT": [
+          "0x55d398326f99059ff775485246999027b3197955",
+          "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+        ],
+        "USDC": [
+          "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+          "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"
+        ]
+      }
+    },
+    "66": {
+      "contractType": "OKCSwapAdapter",
+      "swapRouter": "0xc97b81B8a38b9146010Df85f1Ac714aFE1554343",
+      "paths": {
+        "USDT": [
+          "0x382bb369d343125bfb2117af9c149795c6c65c50",
+          "0x8f8526dbfd6e38e3d8307702ca8469bae6c56c15"
+        ],
+        "USDC": [
+          "0xc946daf81b08146b1c7a8da2a851ddf2b3eaaf85",
+          "0x382bb369d343125bfb2117af9c149795c6c65c50",
+          "0x8f8526dbfd6e38e3d8307702ca8469bae6c56c15"
+        ]
+      }
+    },
+    "137": {
+      "contractType": "UniSwapV3Adapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "paths": {
+        "USDT": [
+          "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+          "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"
+        ],
+        "USDC": [
+          "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270"
+        ]
+      }
+    },
+    "42161": {
+      "contractType": "UniSwapV3Adapter",
+      "swapRouter": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+      "paths": {
+        "USDT": [
+          "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+          "0x82af49447d8a07e3bd95bd0d56f35241523fbab1"
+        ],
+        "USDC": [
+          "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          "0x82af49447d8a07e3bd95bd0d56f35241523fbab1"
+        ]
+      }
+    },
+    "43114": {
+      "contractType": "TradeJoeV2Adapter",
+      "swapRouter": "0xE3Ffc583dC176575eEA7FD9dF2A7c65F7E23f4C3",
+      "paths": {
+        "USDT": [
+          "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+          "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
+        ],
+        "USDC": [
+          "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+          "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
+        ]
+      },
+      "airBinSteps": {
+        "USDT": ["0"],
+        "USDC": ["0"]
+      }
+    },
+    "owner": "0x794b93902449c524c3158f9e101204ecb2057f2e"
+  }
+}
