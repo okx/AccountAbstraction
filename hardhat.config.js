@@ -115,7 +115,7 @@ module.exports = {
     ARBMainnet: {
       url: "https://arb1.arbitrum.io/rpc",
       accounts: [process.env.PRIVATE_KEY],
-      gas: 30000000,
+      gas: 50000000,
     },
     OPMainnet: {
       url: "https://optimism.meowrpc.com",

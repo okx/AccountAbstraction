@@ -1,5 +1,6 @@
 const fs = require("fs");
 let { ethers } = require("hardhat");
+const { expect } = require("chai");
 const { send } = require("process");
 const Utils = require("./Utils.js");
 
@@ -24,7 +25,7 @@ async function instantiateContracts() {
   // Instantiate each contract with its corresponding factory
   EntryPoint = await ethers
     .getContractFactory("contracts/core/EntryPoint.sol:EntryPoint")
-    .then((f) => f.attach(addresses["EntryPoint"]));
+    .then((f) => f.attach(addresses["contracts/core/EntryPoint.sol:EntryPoint"]));
   SmartAccount = await ethers
     .getContractFactory("SmartAccount")
     .then((f) => f.attach(addresses["SmartAccount"]));
