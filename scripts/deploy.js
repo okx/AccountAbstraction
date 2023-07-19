@@ -1,4 +1,5 @@
 const fs = require("fs");
+
 const { ethers, network } = require("hardhat");
 const { expect } = require("chai");
 require("dotenv").config();
@@ -16,8 +17,7 @@ let contractAddress = {},
   SmartAccountProxyFactory,
   OracleAdapter,
   TokenPaymaster,
-  SimulateToken,
-  TestToken;
+  SimulateToken;
 
 const DeployInformation = JSON.parse(fs.readFileSync("DeployInformation.json"));
 
@@ -217,21 +217,12 @@ async function deployHelperContract() {
     salt,
   );
 
-  TestToken = await deploy(
-    contractAddress,
-    DeployFactory,
-    "TestToken",
-    [],
-    [],
-    salt,
-  );
-
   SimulateToken = await deploy(
     contractAddress,
     DeployFactory,
     "SimulateToken",
     ["address", "uint256"],
-    [TokenPaymaster.address, ethers.constants.MaxUint256],
+    [UserOperationHelper.address, ethers.constants.MaxUint256],
     salt,
   );
 
@@ -389,12 +380,6 @@ async function setTokenPaymasterPriceConfig() {
   await tx.wait();
   console.log("setTokenPriceLimitMin USDC", tx.hash);
 
-  tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
-    TestToken.address,
-    ethers.constants.MaxUint256.toString(),
-  );
-  await tx.wait();
-  console.log("setTokenPriceLimitMax TestToken", tx.hash);
 }
 
 async function setOracleConfig() {

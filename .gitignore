@@ -2,6 +2,7 @@ node_modules
 .env
 coverage
 .coverage.json
+ContractAddress.json
 typechain
 typechain-types
 .DS_Store
