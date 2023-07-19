@@ -164,14 +164,6 @@ contract UserOperationHelper is Ownable {
         tokenPaymasters[paymaster] = status;
     }
 
-    function withdrawERC20(
-        address token,
-        address to,
-        uint256 amount
-    ) external onlyOwner {
-        IERC20(token).transfer(to, amount);
-    }
-
     function withdrawNative(address to, uint256 amount) external onlyOwner {
         (bool success, ) = to.call{value: amount}("");
         require(success, "UserOperationHelper: transfer failed");
