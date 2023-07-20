@@ -17,7 +17,7 @@ Deployed on ETH, OKTC, BNB, POLYGON, OP, AVAX, ARBITRUM
 | SmartAccountInitCode     | `0xEcf3f6844166D323409D36A531B50286133fB250` |
 | UserOperationHelper      | `0x9baC5a0dc19078b821Cfa9FFB22588136A98E6a5` |
 | SimulateToken            | `0xF4057dBD6b33A29BE3A5Beab394E6d951B83c1EA` |
-| BundlerDepositHelper     | `0x81FEc186163E41617666f01fdF475dc984cB9F34` |
+| BundlerDepositHelper     | `0x71C9F21517F85D36A0FCDB8E31Ba8a8e28622cFa` |
 
 ### Oracle Adapters
 

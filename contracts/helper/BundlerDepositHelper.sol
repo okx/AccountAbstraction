@@ -44,7 +44,7 @@ contract BundlerDepositHelper is Ownable {
                 "BundlerDepositHelper: Invalid bundler"
             );
 
-            IStakeManager(entryPoint).depositTo{value: amount}(bundler);
+            payable(bundler).transfer(amount);
         }
 
         require(

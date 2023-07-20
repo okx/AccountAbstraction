@@ -126,18 +126,19 @@ module.exports = {
       url: "https://polygon.llamarpc.com",
       accounts: [process.env.PRIVATE_KEY],
       gas: 5000000,
+      gasPrice: 240000000000
     },
     hardhat: {
-      forking: {
-        allowUnlimitedContractSize: true,
-        // url: "https://rpc.ankr.com/eth", //ETH
-        url: "http://35.72.176.238:26659/"//OKC
-        // url: "https://avalanche.public-rpc.com" //AVAX
-        // url: "https://mainnet.optimism.io",//OP
-        // url: "https://arb1.arbitrum.io/rpc" //ARB
-        // url: "https://rpc-mainnet.matic.quiknode.pro", //Polygon
-        // url: "https://bsc-dataseed4.binance.org", //BNB
-      },
+      // forking: {
+      //   allowUnlimitedContractSize: true,
+      //   // url: "https://rpc.ankr.com/eth", //ETH
+      //   url: "http://35.72.176.238:26659/"//OKC
+      //   // url: "https://avalanche.public-rpc.com" //AVAX
+      //   // url: "https://mainnet.optimism.io",//OP
+      //   // url: "https://arb1.arbitrum.io/rpc" //ARB
+      //   // url: "https://rpc-mainnet.matic.quiknode.pro", //Polygon
+      //   // url: "https://bsc-dataseed4.binance.org", //BNB
+      // },
       allowUnlimitedContractSize: true,
       gas: 5000000,
       gasPrice: 100000000000,

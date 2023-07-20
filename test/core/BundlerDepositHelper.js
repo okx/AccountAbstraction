@@ -10,30 +10,30 @@ describe("EntryPoint", function () {
     let EntryPoint = await EntryPointFactory.deploy(owner.address);
 
     let BundlerDepositHelperFactory = await ethers.getContractFactory(
-      "BundlerDepositHelper"
+      "BundlerDepositHelper",
     );
     let BundlerDepositHelper = await BundlerDepositHelperFactory.deploy(
-      owner.address
+      owner.address,
     );
 
     await BundlerDepositHelper.connect(owner).setValidEntryPoint(
       EntryPoint.address,
-      true
+      true,
     );
 
     await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
       bundler.address,
-      true
+      true,
     );
 
     await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
       bundlerTwo.address,
-      true
+      true,
     );
 
     await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
       bundlerThree.address,
-      true
+      true,
     );
 
     return {
@@ -60,11 +60,11 @@ describe("EntryPoint", function () {
             ethers.utils.parseEther("1"),
             ethers.utils.parseEther("1"),
           ],
-          { value: ethers.utils.parseEther("3") }
+          { value: ethers.utils.parseEther("3") },
         );
 
         await expect(tx).to.be.revertedWith(
-          "BundlerDepositHelper: Invalid bundler"
+          "BundlerDepositHelper: Invalid bundler",
         );
       });
 
@@ -80,11 +80,11 @@ describe("EntryPoint", function () {
             ethers.utils.parseEther("1"),
             ethers.utils.parseEther("1"),
           ],
-          { value: ethers.utils.parseEther("3") }
+          { value: ethers.utils.parseEther("3") },
         );
 
         await expect(tx).to.be.revertedWith(
-          "BundlerDepositHelper: Invalid EntryPoint"
+          "BundlerDepositHelper: Invalid EntryPoint",
         );
       });
 
@@ -101,11 +101,11 @@ describe("EntryPoint", function () {
           EntryPoint.address,
           [bundler.address, bundlerTwo.address, bundlerThree.address],
           [ethers.utils.parseEther("1"), ethers.utils.parseEther("1")],
-          { value: ethers.utils.parseEther("3") }
+          { value: ethers.utils.parseEther("3") },
         );
 
         await expect(tx).to.be.revertedWith(
-          "BundlerDepositHelper: Invalid input"
+          "BundlerDepositHelper: Invalid input",
         );
       });
 
@@ -126,11 +126,11 @@ describe("EntryPoint", function () {
             ethers.utils.parseEther("1"),
             ethers.utils.parseEther("1"),
           ],
-          { value: ethers.utils.parseEther("4") }
+          { value: ethers.utils.parseEther("4") },
         );
 
         await expect(tx).to.be.revertedWith(
-          "BundlerDepositHelper: Invalid value"
+          "BundlerDepositHelper: Invalid value",
         );
       });
     });
@@ -149,6 +149,13 @@ describe("EntryPoint", function () {
         BundlerDepositHelper,
       } = await loadFixture(deploy);
 
+
+      const bundlerBalanceBefore = await ethers.provider.getBalance(bundler.address)
+      const bundlerTwoBalanceBefore = await ethers.provider.getBalance(bundler.address)
+      const bundlerThreeBalanceBefore = await ethers.provider.getBalance(bundler.address)
+
+
+
       await BundlerDepositHelper.batchDepositForBundler(
         EntryPoint.address,
         [bundler.address, bundlerTwo.address, bundlerThree.address],
@@ -157,70 +164,18 @@ describe("EntryPoint", function () {
           ethers.utils.parseEther("1"),
           ethers.utils.parseEther("1"),
         ],
-        { value: ethers.utils.parseEther("3") }
+        { value: ethers.utils.parseEther("3") },
       );
 
-      await expect(await EntryPoint.balanceOf(bundler.address)).to.equal(
-        ethers.utils.parseEther("1")
+      await expect((await ethers.provider.getBalance(bundler.address)).sub(bundlerBalanceBefore)).to.equal(
+        ethers.utils.parseEther("1"),
       );
-      await expect(await EntryPoint.balanceOf(bundlerTwo.address)).to.equal(
-        ethers.utils.parseEther("1")
-      );
-      await expect(await EntryPoint.balanceOf(bundlerThree.address)).to.equal(
-        ethers.utils.parseEther("1")
-      );
-    });
-
-    it("should emit deposit events", async function () {
-      const {
-        owner,
-        bundler,
-        bundlerTwo,
-        bundlerThree,
-        EntryPoint,
-        BundlerDepositHelper,
-      } = await loadFixture(deploy);
-
-      let tx = await BundlerDepositHelper.batchDepositForBundler(
-        EntryPoint.address,
-        [bundler.address, bundlerTwo.address, bundlerThree.address],
-        [
-          ethers.utils.parseEther("1"),
-          ethers.utils.parseEther("1"),
-          ethers.utils.parseEther("1"),
-        ],
-        { value: ethers.utils.parseEther("3") }
-      );
-
-      await expect(tx)
-        .to.emit(EntryPoint, "Deposited")
-        .withArgs(
-          BundlerDepositHelper.address,
-          EntryPoint.address,
-          bundler.address,
-          ethers.utils.parseEther("1"),
-          ethers.utils.parseEther("1")
-        );
-
-      await expect(tx)
-        .to.emit(EntryPoint, "Deposited")
-        .withArgs(
-          BundlerDepositHelper.address,
-          EntryPoint.address,
-          bundlerTwo.address,
-          ethers.utils.parseEther("1"),
-          ethers.utils.parseEther("1")
-        );
-
-      await expect(tx)
-        .to.emit(EntryPoint, "Deposited")
-        .withArgs(
-          BundlerDepositHelper.address,
-          EntryPoint.address,
-          bundlerThree.address,
-          ethers.utils.parseEther("1"),
-          ethers.utils.parseEther("1")
-        );
+      await expect((
+        await ethers.provider.getBalance(bundlerTwo.address)
+      ).sub(bundlerTwoBalanceBefore)).to.equal(ethers.utils.parseEther("1"));
+      await expect((
+        await ethers.provider.getBalance(bundlerThree.address)
+      ).sub(bundlerThreeBalanceBefore)).to.equal(ethers.utils.parseEther("1"));
     });
   });
 });

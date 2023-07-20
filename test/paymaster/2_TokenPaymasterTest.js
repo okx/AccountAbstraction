@@ -9,14 +9,14 @@ describe("TokenPaymaster", function () {
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
     let entryPointContract = await MockEntryPointL1.deploy(owner.address);
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
-      "MockChainlinkOracle"
+      "MockChainlinkOracle",
     );
     let MockChainlinkOracle = await MockChainlinkOracleFactory.deploy(
-      owner.address
+      owner.address,
     );
 
     let MockChainlinkOracleETH = await MockChainlinkOracleFactory.deploy(
-      owner.address
+      owner.address,
     );
 
     await MockChainlinkOracle.connect(owner).setPrice(100000000);
@@ -29,20 +29,20 @@ describe("TokenPaymaster", function () {
     let testToken = await TestTokenFactory.deploy();
 
     let PriceOracleFactory = await ethers.getContractFactory(
-      "ChainlinkOracleAdapter"
+      "ChainlinkOracleAdapter",
     );
     let priceOracle = await PriceOracleFactory.deploy(owner.address);
 
     let TokenPaymasterFactory = await ethers.getContractFactory(
-      "TokenPaymaster"
+      "TokenPaymaster",
     );
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPoint.address
+      entryPoint.address,
     );
 
-    await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address)
+    await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address);
 
     await priceOracle
       .connect(owner)
@@ -53,29 +53,30 @@ describe("TokenPaymaster", function () {
       .connect(owner)
       .setPriceFeed(
         await priceOracle.NATIVE_TOKEN(),
-        MockChainlinkOracleETH.address
+        MockChainlinkOracleETH.address,
       );
     await priceOracle
       .connect(owner)
       .setDecimals(await priceOracle.NATIVE_TOKEN(), 18);
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper"
+      "UserOperationHelper",
     );
     let userOpHelper = await UserOpHelperFactory.deploy(
       tokenPaymaster.address,
       entryPoint.address,
-      owner.address
+      owner.address,
     );
 
     let tokenPaymasterWithEntryPoint = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPoint.address
+      entryPointContract.address,
     );
 
-    await tokenPaymasterWithEntryPoint.connect(owner).setPriceOracle(priceOracle.address)
-
+    await tokenPaymasterWithEntryPoint
+      .connect(owner)
+      .setPriceOracle(priceOracle.address);
 
     return {
       entryPoint,
@@ -118,7 +119,7 @@ describe("TokenPaymaster", function () {
 
       await tokenPaymaster.setTokenPriceLimitMax(testToken.address, maxPrice);
       expect(
-        await tokenPaymaster.tokenPriceLimitMax(testToken.address)
+        await tokenPaymaster.tokenPriceLimitMax(testToken.address),
       ).to.equal(maxPrice);
     });
     it("should emit an event on TokenPriceLimitMaxSet", async function () {
@@ -126,7 +127,7 @@ describe("TokenPaymaster", function () {
       let maxPrice = ethers.utils.parseEther("1");
       let minPrice = ethers.utils.parseEther("0.00001");
       await expect(
-        tokenPaymaster.setTokenPriceLimitMax(testToken.address, maxPrice)
+        tokenPaymaster.setTokenPriceLimitMax(testToken.address, maxPrice),
       )
         .to.emit(tokenPaymaster, "TokenPriceLimitMaxSet")
         .withArgs(testToken.address, maxPrice);
@@ -139,7 +140,7 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymaster
           .connect(alice)
-          .setTokenPriceLimitMax(testToken.address, maxPrice)
+          .setTokenPriceLimitMax(testToken.address, maxPrice),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
@@ -151,7 +152,7 @@ describe("TokenPaymaster", function () {
 
       await tokenPaymaster.setTokenPriceLimitMin(testToken.address, minPrice);
       expect(
-        await tokenPaymaster.tokenPriceLimitMin(testToken.address)
+        await tokenPaymaster.tokenPriceLimitMin(testToken.address),
       ).to.equal(minPrice);
     });
     it("should emit an event on TokenPriceLimitMinSet", async function () {
@@ -159,7 +160,7 @@ describe("TokenPaymaster", function () {
       let maxPrice = ethers.utils.parseEther("1");
       let minPrice = ethers.utils.parseEther("0.00001");
       await expect(
-        tokenPaymaster.setTokenPriceLimitMin(testToken.address, minPrice)
+        tokenPaymaster.setTokenPriceLimitMin(testToken.address, minPrice),
       )
         .to.emit(tokenPaymaster, "TokenPriceLimitMinSet")
         .withArgs(testToken.address, minPrice);
@@ -172,7 +173,7 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymaster
           .connect(alice)
-          .setTokenPriceLimitMin(testToken.address, minPrice)
+          .setTokenPriceLimitMin(testToken.address, minPrice),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
@@ -195,23 +196,23 @@ describe("TokenPaymaster", function () {
         },
         ethers.constants.AddressZero,
         0,
-        "0x"
+        "0x",
       );
 
       let userOpHash = await userOpHelper.getUserOpHash(
         userOp,
-        entryPoint.address
+        entryPoint.address,
       );
 
       let result = await tokenPaymaster.validatePaymasterUserOp(
         userOp,
         userOpHash,
-        0
+        0,
       );
 
       const expectContext = ethers.utils.defaultAbiCoder.encode(
         ["bytes32", "address", "address", "uint256", "uint256"],
-        [userOpHash, userOp.sender, testToken.address, exchangeRate, costGas]
+        [userOpHash, userOp.sender, testToken.address, exchangeRate, costGas],
       );
 
       await expect(result[0]).to.equal(expectContext);
@@ -229,7 +230,7 @@ describe("TokenPaymaster", function () {
       } = await loadFixture(deploy);
 
       let exchangeRateFromOracle = await priceOracle.exchangeRate(
-        testToken.address
+        testToken.address,
       );
       let exchangeRate = ethers.utils.parseEther("1900000000");
 
@@ -248,18 +249,18 @@ describe("TokenPaymaster", function () {
         },
         ethers.constants.AddressZero,
         0,
-        "0x"
+        "0x",
       );
 
       let userOpHash = await userOpHelper.getUserOpHash(
         userOp,
-        entryPoint.address
+        entryPoint.address,
       );
 
       let result = await tokenPaymaster.validatePaymasterUserOp(
         userOp,
         userOpHash,
-        0
+        0,
       );
 
       const expectContext = ethers.utils.defaultAbiCoder.encode(
@@ -270,7 +271,7 @@ describe("TokenPaymaster", function () {
           testToken.address,
           exchangeRateFromOracle,
           costGas,
-        ]
+        ],
       );
 
       await expect(result[0]).to.equal(expectContext);
@@ -303,23 +304,23 @@ describe("TokenPaymaster", function () {
         },
         ethers.constants.AddressZero,
         0,
-        "0x"
+        "0x",
       );
 
       let userOpHash = await userOpHelper.getUserOpHash(
         userOp,
-        entryPoint.address
+        entryPoint.address,
       );
 
       let result = await tokenPaymaster.validatePaymasterUserOp(
         userOp,
         userOpHash,
-        0
+        0,
       );
 
       const expectContext = ethers.utils.defaultAbiCoder.encode(
         ["bytes32", "address", "address", "uint256", "uint256"],
-        [userOpHash, userOp.sender, testToken.address, exchangeRate, costGas]
+        [userOpHash, userOp.sender, testToken.address, exchangeRate, costGas],
       );
 
       await expect(result[0]).to.equal(expectContext);
@@ -350,18 +351,18 @@ describe("TokenPaymaster", function () {
         },
         owner.address,
         0,
-        "0x"
+        "0x",
       );
 
       let userOpHash = await userOpHelper.getUserOpHash(
         userOp,
-        entryPoint.address
+        entryPoint.address,
       );
 
       let result = await tokenPaymaster.validatePaymasterUserOp(
         userOp,
         userOpHash,
-        0
+        0,
       );
 
       let context = result[0];
@@ -406,18 +407,18 @@ describe("TokenPaymaster", function () {
         },
         owner.address,
         0,
-        "0x"
+        "0x",
       );
 
       let userOpHash = await userOpHelper.getUserOpHash(
         userOp,
-        entryPoint.address
+        entryPoint.address,
       );
 
       let result = await tokenPaymaster.validatePaymasterUserOp(
         userOp,
         userOpHash,
-        0
+        0,
       );
 
       let context = result[0];
@@ -432,7 +433,7 @@ describe("TokenPaymaster", function () {
         .approve(tokenPaymaster.address, ethers.utils.parseEther("1"));
 
       await expect(
-        tokenPaymaster.connect(entryPoint).postOp(0, context, executeCost)
+        tokenPaymaster.connect(entryPoint).postOp(0, context, executeCost),
       )
         .to.emit(tokenPaymaster, "TokenCost")
         .withArgs(
@@ -440,7 +441,7 @@ describe("TokenPaymaster", function () {
           owner.address,
           testToken.address,
           "8000",
-          "4000000000000"
+          "4000000000000",
         );
     });
   });
@@ -458,7 +459,7 @@ describe("TokenPaymaster", function () {
 
     it("should emit an event on AddedToWhitelist", async function () {
       const { owner, signer, alice, tokenPaymaster } = await loadFixture(
-        deploy
+        deploy,
       );
       let addresses = [owner.address, alice.address];
 
@@ -471,7 +472,7 @@ describe("TokenPaymaster", function () {
       const { owner, tokenPaymaster, alice } = await loadFixture(deploy);
       let addresses = [owner.address, alice.address];
       await expect(
-        tokenPaymaster.connect(alice).addToWhitelist(addresses)
+        tokenPaymaster.connect(alice).addToWhitelist(addresses),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
@@ -489,7 +490,7 @@ describe("TokenPaymaster", function () {
 
     it("should emit an event on RemovedFromWhitelist", async function () {
       const { owner, signer, alice, tokenPaymaster } = await loadFixture(
-        deploy
+        deploy,
       );
       let addresses = [owner.address, alice.address];
 
@@ -502,14 +503,14 @@ describe("TokenPaymaster", function () {
       const { owner, tokenPaymaster, alice } = await loadFixture(deploy);
       let addresses = [owner.address, alice.address];
       await expect(
-        tokenPaymaster.connect(alice).removeFromWhitelist(addresses)
+        tokenPaymaster.connect(alice).removeFromWhitelist(addresses),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
   describe("withdrawERC20", function () {
     it("should withdrawERC20 correctly", async function () {
       const { owner, tokenPaymaster, alice, testToken } = await loadFixture(
-        deploy
+        deploy,
       );
 
       let addresses = [owner.address, alice.address];
@@ -520,7 +521,7 @@ describe("TokenPaymaster", function () {
       await tokenPaymaster.withdrawERC20(
         testToken.address,
         withdrawAmount,
-        owner.address
+        owner.address,
       );
 
       expect(await testToken.balanceOf(owner.address)).to.equal(withdrawAmount);
@@ -529,7 +530,7 @@ describe("TokenPaymaster", function () {
 
     it("should emit an event on Withdrawal", async function () {
       const { owner, tokenPaymaster, alice, testToken } = await loadFixture(
-        deploy
+        deploy,
       );
 
       let addresses = [owner.address, alice.address];
@@ -541,8 +542,8 @@ describe("TokenPaymaster", function () {
         tokenPaymaster.withdrawERC20(
           testToken.address,
           withdrawAmount,
-          owner.address
-        )
+          owner.address,
+        ),
       )
         .to.emit(tokenPaymaster, "Withdrawal")
         .withArgs(testToken.address, withdrawAmount);
@@ -550,13 +551,13 @@ describe("TokenPaymaster", function () {
 
     it("should revert if the caller is not owner", async function () {
       const { owner, tokenPaymaster, alice, testToken } = await loadFixture(
-        deploy
+        deploy,
       );
       let withdrawAmount = ethers.utils.parseEther("1");
       await expect(
         tokenPaymaster
           .connect(alice)
-          .withdrawERC20(testToken.address, withdrawAmount, owner.address)
+          .withdrawERC20(testToken.address, withdrawAmount, owner.address),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -567,8 +568,8 @@ describe("TokenPaymaster", function () {
         tokenPaymaster.withdrawERC20(
           testToken.address,
           withdrawAmount,
-          owner.address
-        )
+          owner.address,
+        ),
       ).to.be.revertedWith("Address is not whitelisted");
     });
   });
@@ -590,11 +591,11 @@ describe("TokenPaymaster", function () {
       expect(
         await tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
           alice.address,
-          withdrawAmount
-        )
+          withdrawAmount,
+        ),
       ).to.changeEtherBalances(
         [entryPointContract, alice],
-        [-ethers.utils.parseEther("1"), ethers.utils.parseEther("1")]
+        [-ethers.utils.parseEther("1"), ethers.utils.parseEther("1")],
       );
     });
 
@@ -612,8 +613,8 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
           alice.address,
-          withdrawAmount
-        )
+          withdrawAmount,
+        ),
       )
         .to.emit(tokenPaymasterWithEntryPoint, "Withdrawal")
         .withArgs(ethers.constants.AddressZero, withdrawAmount);
@@ -633,7 +634,7 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymasterWithEntryPoint
           .connect(alice)
-          .withdrawDepositNativeToken(alice.address, withdrawAmount)
+          .withdrawDepositNativeToken(alice.address, withdrawAmount),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -651,8 +652,8 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
           alice.address,
-          withdrawAmount
-        )
+          withdrawAmount,
+        ),
       ).to.be.revertedWith("Address is not whitelisted");
     });
   });
@@ -662,20 +663,20 @@ describe("TokenPaymaster", function () {
       const { owner, tokenPaymaster } = await loadFixture(deploy);
 
       let PriceOracleFactory = await ethers.getContractFactory(
-        "ChainlinkOracleAdapter"
+        "ChainlinkOracleAdapter",
       );
       let newPriceOracle = await PriceOracleFactory.deploy(owner.address);
 
       await tokenPaymaster.setPriceOracle(newPriceOracle.address);
       expect(await tokenPaymaster.priceOracle()).to.equal(
-        newPriceOracle.address
+        newPriceOracle.address,
       );
     });
 
     it("should emit an event on PriceOracleUpdated", async function () {
       const { owner, tokenPaymaster } = await loadFixture(deploy);
       let PriceOracleFactory = await ethers.getContractFactory(
-        "ChainlinkOracleAdapter"
+        "ChainlinkOracleAdapter",
       );
       let newPriceOracle = await PriceOracleFactory.deploy(owner.address);
 

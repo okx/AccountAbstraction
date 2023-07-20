@@ -8,14 +8,14 @@ describe("TokenPaymaster", function () {
     let maxPrice = ethers.BigNumber.from("20000000000");
     let minPrice = ethers.BigNumber.from("200000000");
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
-      "MockChainlinkOracle"
+      "MockChainlinkOracle",
     );
     let MockChainlinkOracle = await MockChainlinkOracleFactory.deploy(
-      owner.address
+      owner.address,
     );
 
     let MockChainlinkOracleETH = await MockChainlinkOracleFactory.deploy(
-      owner.address
+      owner.address,
     );
 
     await MockChainlinkOracle.connect(owner).setPrice(1000000);
@@ -28,53 +28,52 @@ describe("TokenPaymaster", function () {
     let TestToken = await TestTokenFactory.deploy();
 
     let PriceOracleFactory = await ethers.getContractFactory(
-      "ChainlinkOracleAdapter"
+      "ChainlinkOracleAdapter",
     );
     let PriceOracle = await PriceOracleFactory.deploy(owner.address);
 
     let TokenPaymasterFactory = await ethers.getContractFactory(
-      "TokenPaymaster"
+      "TokenPaymaster",
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      EntryPoint.address
+      EntryPoint.address,
     );
 
-    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
-
+    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
 
     await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
       TestToken.address,
-      maxPrice
+      maxPrice,
     );
     await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
       TestToken.address,
-      minPrice
+      minPrice,
     );
 
     await PriceOracle.connect(owner).setPriceFeed(
       TestToken.address,
-      MockChainlinkOracle.address
+      MockChainlinkOracle.address,
     );
     await PriceOracle.connect(owner).setDecimals(TestToken.address, 6);
 
     await PriceOracle.connect(owner).setPriceFeed(
       await PriceOracle.NATIVE_TOKEN(),
-      MockChainlinkOracleETH.address
+      MockChainlinkOracleETH.address,
     );
     await PriceOracle.connect(owner).setDecimals(
       await PriceOracle.NATIVE_TOKEN(),
-      18
+      18,
     );
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper"
+      "UserOperationHelper",
     );
     let UserOpHelper = await UserOpHelperFactory.deploy(
       TokenPaymaster.address,
       EntryPoint.address,
-      owner.address
+      owner.address,
     );
 
     return {
@@ -113,12 +112,12 @@ describe("TokenPaymaster", function () {
     await expect(defaultPriceOracle).to.equal(PriceOracle.address);
 
     let maxTokenPrice = await TokenPaymaster.tokenPriceLimitMax(
-      TestToken.address
+      TestToken.address,
     );
     await expect(maxTokenPrice).to.equal(maxPrice);
 
     let minTokenPrice = await TokenPaymaster.tokenPriceLimitMin(
-      TestToken.address
+      TestToken.address,
     );
     await expect(minTokenPrice).to.equal(minPrice);
 
@@ -149,27 +148,27 @@ describe("TokenPaymaster", function () {
       },
       ethers.constants.AddressZero,
       0,
-      "0x"
+      "0x",
     );
 
     let userOpHash = await UserOpHelper.getUserOpHash(
       userOp,
-      EntryPoint.address
+      EntryPoint.address,
     );
 
     let result = await TokenPaymaster.validatePaymasterUserOp(
       userOp,
       userOpHash,
-      0
+      0,
     );
 
     let postOpGas = (await TokenPaymaster.COST_OF_POST()).mul(
-      userOp.maxFeePerGas
+      userOp.maxFeePerGas,
     );
 
     const expectContext = ethers.utils.defaultAbiCoder.encode(
       ["bytes32", "address", "address", "uint256", "uint256"],
-      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas]
+      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
 
     await expect(result[0]).to.equal(expectContext);
@@ -199,27 +198,27 @@ describe("TokenPaymaster", function () {
       },
       ethers.constants.AddressZero,
       0,
-      "0x"
+      "0x",
     );
 
     let userOpHash = await UserOpHelper.getUserOpHash(
       userOp,
-      EntryPoint.address
+      EntryPoint.address,
     );
 
     let result = await TokenPaymaster.validatePaymasterUserOp(
       userOp,
       userOpHash,
-      0
+      0,
     );
 
     let postOpGas = (await TokenPaymaster.COST_OF_POST()).mul(
-      userOp.maxFeePerGas
+      userOp.maxFeePerGas,
     );
 
     const expectContext = ethers.utils.defaultAbiCoder.encode(
       ["bytes32", "address", "address", "uint256", "uint256"],
-      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas]
+      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
 
     await expect(result[0]).to.equal(expectContext);
@@ -249,27 +248,27 @@ describe("TokenPaymaster", function () {
       },
       ethers.constants.AddressZero,
       0,
-      "0x"
+      "0x",
     );
 
     let userOpHash = await UserOpHelper.getUserOpHash(
       userOp,
-      EntryPoint.address
+      EntryPoint.address,
     );
 
     let result = await TokenPaymaster.validatePaymasterUserOp(
       userOp,
       userOpHash,
-      0
+      0,
     );
 
     let postOpGas = (await TokenPaymaster.COST_OF_POST()).mul(
-      userOp.maxFeePerGas
+      userOp.maxFeePerGas,
     );
 
     const expectContext = ethers.utils.defaultAbiCoder.encode(
       ["bytes32", "address", "address", "uint256", "uint256"],
-      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas]
+      [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
 
     await expect(result[0]).to.equal(expectContext);
@@ -300,22 +299,22 @@ describe("TokenPaymaster", function () {
       },
       owner.address,
       0,
-      "0x"
+      "0x",
     );
 
     let userOpHash = await UserOpHelper.getUserOpHash(
       userOp,
-      EntryPoint.address
+      EntryPoint.address,
     );
 
     let result = await TokenPaymaster.validatePaymasterUserOp(
       userOp,
       userOpHash,
-      0
+      0,
     );
 
     let postOpGas = (await TokenPaymaster.COST_OF_POST()).mul(
-      userOp.maxFeePerGas
+      userOp.maxFeePerGas,
     );
 
     let context = result[0];
@@ -332,7 +331,7 @@ describe("TokenPaymaster", function () {
 
     await expect(receipt.status).to.equal(1);
     await expect(await TestToken.balanceOf(TokenPaymaster.address)).to.equal(
-      ERC20Cost
+      ERC20Cost,
     );
   });
 
@@ -344,27 +343,29 @@ describe("TokenPaymaster", function () {
     let EntryPoint = await EntryPointFactory.deploy(owner.address);
 
     let TokenPaymasterFactory = await ethers.getContractFactory(
-      "TokenPaymaster"
+      "TokenPaymaster",
     );
 
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      PriceOracle.address,
       owner.address,
-      EntryPoint.address
+      EntryPoint.address,
     );
+
+    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
 
     // Deploy Mock UniswapV2Router
     let MockUniswapV2RouterFactory = await ethers.getContractFactory(
-      "MockUniSwapV2Router"
+      "MockUniSwapV2Router",
     );
     let MockUniswapV2Router = await MockUniswapV2RouterFactory.deploy(
-      "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+      "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     );
 
     let SwapHelperFactory = await ethers.getContractFactory("UniSwapV2Adapter");
     let SwapHelper = await SwapHelperFactory.deploy(
-      MockUniswapV2Router.address, owner.address
+      MockUniswapV2Router.address,
+      owner.address,
     );
 
     await SwapHelper.connect(owner).setPath(TestToken.address, [
@@ -387,7 +388,7 @@ describe("TokenPaymaster", function () {
     await TokenPaymaster.connect(owner).swapToNative(
       TestToken.address,
       1000000,
-      0
+      0,
     );
 
     let balance = await ethers.provider.getBalance(TokenPaymaster.address);
