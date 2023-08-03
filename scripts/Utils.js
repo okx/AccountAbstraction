@@ -60,6 +60,160 @@ async function generateAccount(params) {
   if ((await ethers.provider.getBalance(sender)) == 0) {
     let tx = await params.owner.sendTransaction({
       to: sender,
+      value: ethers.utils.parseEther("0.001"), // Sends exactly 1.0 ether
+    });
+    await tx.wait();
+  }
+
+  let abi = [
+    {
+      inputs: [
+        {
+          components: [
+            {
+              internalType: "address",
+              name: "sender",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "nonce",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "initCode",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes",
+              name: "callData",
+              type: "bytes",
+            },
+            {
+              internalType: "uint256",
+              name: "callGasLimit",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "verificationGasLimit",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "preVerificationGas",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "maxFeePerGas",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "maxPriorityFeePerGas",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "paymasterAndData",
+              type: "bytes",
+            },
+            {
+              internalType: "bytes",
+              name: "signature",
+              type: "bytes",
+            },
+          ],
+          internalType: "struct UserOperation[]",
+          name: "ops",
+          type: "tuple[]",
+        },
+      ],
+      name: "handleOps",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+  ];
+
+  let EntryPoint = new ethers.Contract(
+    params.EntryPoint.address,
+    abi,
+    hre.ethers.provider
+  );
+
+  let gas = 1000000;
+  if ((await hre.ethers.provider.getNetwork().chainId) == 42161) {
+    gas = 30000000;
+  }
+
+  tx = await EntryPoint.connect(params.bundler).handleOps([userOp], {
+    gasLimit: gas,
+  });
+
+  recepit = await tx.wait();
+
+  if ((await ethers.provider.getCode(sender)) == "0x") {
+    console.log(sender + " deploy failed");
+  } else {
+    console.log(sender + " deploy success");
+  }
+
+  return sender;
+}
+
+async function generateAccountWithCallData(params, callData) {
+  if (params.random == null) {
+    params.random = Math.floor(Math.random() * 1000001);
+  }
+
+  const nonce = 0;
+  let initializeData = params.SmartAccount.interface.encodeFunctionData(
+    "Initialize",
+    [params.owner.address]
+  );
+
+  const sender = await params.SmartAccountProxyFactory.getAddress(
+    params.SmartAccount.address,
+    initializeData,
+    params.random
+  );
+
+  const data = params.SmartAccountProxyFactory.interface.encodeFunctionData(
+    "createAccount",
+    [params.SmartAccount.address, initializeData, params.random]
+  );
+
+  const initCode = ethers.utils.solidityPack(
+    ["address", "bytes"],
+    [params.SmartAccountProxyFactory.address, data]
+  );
+
+  let userOp = await generateSignedUOP({
+    sender: sender,
+    nonce: nonce,
+    initCode: initCode,
+    callData: callData,
+    paymasterAndData: "0x",
+    owner: params.owner,
+    SmartAccount: params.SmartAccount,
+    EntryPoint: params.EntryPoint.address,
+    sigTime: params.sigTime,
+    sigType: params.sigType,
+  });
+
+  if ((await ethers.provider.getCode(sender)) == "0x") {
+    console.log(sender + " start deploy");
+  } else {
+    console.log(sender + " has deployed");
+    return sender;
+  }
+
+  if ((await ethers.provider.getBalance(sender)) == 0) {
+    let tx = await params.owner.sendTransaction({
+      to: sender,
       value: ethers.utils.parseEther("0.01"), // Sends exactly 1.0 ether
     });
     await tx.wait();
@@ -479,6 +633,7 @@ async function getDeployedAdderss(
 
 module.exports = {
   generateAccount,
+  generateAccountWithCallData,
   generateUOP,
   generateSignedUOP,
   generateNUOP,
