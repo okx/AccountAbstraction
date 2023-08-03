@@ -16,7 +16,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
-    uint256 public constant COST_OF_POST = 20000;
+    uint256 public constant COST_OF_POST = 50000;
     uint256 internal constant SIG_VALIDATION_FAILED = 1;
     address public immutable verifyingSigner;
     address public immutable ADDRESS_THIS;
