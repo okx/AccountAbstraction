@@ -5,15 +5,9 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.7",
     "@openzeppelin/contracts": "^4.8.1",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
-    "@remix-project/remixd": "^0.6.9",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
-    "crypto": "^1.0.1",
     "dotenv": "^16.0.3",
-    "ecurve": "^1.0.0",
-    "ethereumjs-util": "^7.1.5",
-    "hardhat": "^2.16.1",
-    "noble-bls12-381": "^0.15.0",
-    "sha3": "^2.1.4"
+    "hardhat": "^2.16.1"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
