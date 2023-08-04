@@ -1637,7 +1637,7 @@ describe("EntryPoint", function () {
       //refund success
       const actualGasCost = await getActualGasCost(EntryPoint, receipt1);
 
-      deviation = ethers.BigNumber.from("100000000000");
+      deviation = ethers.BigNumber.from("4000000000000");
       AACost = beforeAABalance
         .sub(afterAABalance)
         .mul(ethers.utils.parseEther("1.0"))

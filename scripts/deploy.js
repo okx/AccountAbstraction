@@ -563,6 +563,22 @@ async function setSwapHelperConfig() {
     );
     await tx.wait();
     console.log("setPath USDC", tx.hash);
+  } else {
+
+    let tx = await SwapHelper.connect(owner).setPoolFee(
+      DeployInformation["USDT"][chainId]["address"],
+      DeployInformation["SwapHelper"][chainId]["poolFee"]["USDT"],
+    );
+    await tx.wait();
+    console.log("setPoolFee USDT", tx.hash);
+
+    tx = await SwapHelper.connect(owner).setPoolFee(
+      DeployInformation["USDC"][chainId]["address"],
+      DeployInformation["SwapHelper"][chainId]["poolFee"]["USDC"],
+    );
+    await tx.wait();
+    console.log("setPoolFee USDC", tx.hash);
+
   }
 
   if (

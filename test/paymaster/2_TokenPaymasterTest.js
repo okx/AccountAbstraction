@@ -184,7 +184,7 @@ describe("TokenPaymaster", function () {
         await loadFixture(deploy);
 
       let exchangeRate = 2000000000;
-      let costGas = 2000000000000;
+      let costGas = 5000000000000;
 
       let userOp = await Utils.generatePaymasterUOP(
         {
@@ -235,7 +235,7 @@ describe("TokenPaymaster", function () {
       let exchangeRate = ethers.utils.parseEther("1900000000");
 
       let maxPrice = ethers.utils.parseEther("3000000000");
-      let costGas = 2000000000000;
+      let costGas = 5000000000000;
 
       await tokenPaymaster.setTokenPriceLimitMax(testToken.address, maxPrice);
 
@@ -290,7 +290,7 @@ describe("TokenPaymaster", function () {
 
       let exchangeRate = await priceOracle.exchangeRate(testToken.address);
       let minPrice = ethers.utils.parseEther("1500000000");
-      let costGas = 2000000000000;
+      let costGas = 5000000000000;
 
       await tokenPaymaster.setTokenPriceLimitMin(testToken.address, minPrice);
 
@@ -382,7 +382,7 @@ describe("TokenPaymaster", function () {
       let receipt = await tx.wait();
 
       await expect(receipt.status).to.equal(1);
-      expect(await testToken.balanceOf(tokenPaymaster.address)).to.equal(8000);
+      expect(await testToken.balanceOf(tokenPaymaster.address)).to.equal(14000);
     });
 
     it("should emit an event on TokenCost", async function () {
@@ -440,8 +440,8 @@ describe("TokenPaymaster", function () {
           userOpHash,
           owner.address,
           testToken.address,
-          "8000",
-          "4000000000000",
+          "14000",
+          "7000000000000",
         );
     });
   });
