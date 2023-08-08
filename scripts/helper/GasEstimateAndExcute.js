@@ -337,6 +337,8 @@ async function handleOps(callData, verificationGasLimit, callGasLimit, k) {
 
     await tx.wait();
 
+    console.log("handleOps tx hash " + tx.hash);
+
     return tx.hash
 }
 
@@ -367,10 +369,11 @@ async function SimulateAndExcute(callData, k) {
 
 async function main() {
     await instantiateContracts();
-    let callData = SmartAccount.interface.encodeFunctionData(
+    const callData = SmartAccount.interface.encodeFunctionData(
         "execTransactionFromEntrypoint",
         [owner.address, ethers.utils.parseEther("0.0000001"), "0x"]
     );
+    const k = 1.2;
     SimulateAndExcute(callData, k)
 }
 

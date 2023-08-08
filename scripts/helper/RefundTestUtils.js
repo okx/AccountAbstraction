@@ -165,7 +165,6 @@ async function generateSignature(
 
 
 module.exports = {
-  generateAccount,
   generateUOP,
   generateSignedUOP,
   generateSignature,
