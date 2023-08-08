@@ -2,15 +2,15 @@ node_modules
 .env
 coverage
 .coverage.json
-ContractAddress.json
 typechain
 typechain-types
 .DS_Store
+DeployInformation.json
 
 # Hardhat files
 cache
 artifacts
-scripts/*
-!scripts/deploy.js
-!scripts/smokeTest.js
-!scripts/Utils.js
+scripts/helper/*
+!scripts/helper/GasEstimateAndExcute.js
+!scripts/helper/deploySender.js
+!scripts/helper/RefundTestUtils.js

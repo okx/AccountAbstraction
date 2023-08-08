@@ -110,7 +110,6 @@ module.exports = {
     ETHMainnet: {
       url: "https://rpc.ankr.com/eth",
       accounts: [process.env.PRIVATE_KEY],
-      gas: 5000000,
     },
     ARBMainnet: {
       url: "https://arb1.arbitrum.io/rpc",
@@ -128,17 +127,12 @@ module.exports = {
       gas: 5000000,
       gasPrice: 240000000000
     },
+    Goerli: {
+      url: "https://ethereum-goerli.publicnode.com",
+      accounts: [process.env.PRIVATE_KEY],
+      gas: 5000000,
+    },
     hardhat: {
-      // forking: {
-      //   allowUnlimitedContractSize: true,
-      //   // url: "https://rpc.ankr.com/eth", //ETH
-      //   url: "http://35.72.176.238:26659/"//OKC
-      //   // url: "https://avalanche.public-rpc.com" //AVAX
-      //   // url: "https://mainnet.optimism.io",//OP
-      //   // url: "https://arb1.arbitrum.io/rpc" //ARB
-      //   // url: "https://rpc-mainnet.matic.quiknode.pro", //Polygon
-      //   // url: "https://bsc-dataseed4.binance.org", //BNB
-      // },
       allowUnlimitedContractSize: true,
       gas: 5000000,
       gasPrice: 100000000000,
