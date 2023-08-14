@@ -2,7 +2,7 @@
 pragma solidity ^0.8.12;
 
 import "../interfaces/IEntryPointLogic.sol";
-import {EntryPoint as EntryPoint0_4} from "../@eth-infinitism-v0.4/EntryPoint.sol";
+import {EntryPoint as EntryPoint0_4} from "../@eth-infinitism-v0.4/core/EntryPoint.sol";
 import "./Storage.sol";
 
 contract EntryPointLogic is IEntryPointLogic, EntryPoint0_4, Storage {

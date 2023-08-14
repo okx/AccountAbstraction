@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IStorage.sol";
-import "../interfaces/IStakeManager.sol";
+import "../@eth-infinitism-v0.4/interfaces/IStakeManager.sol";
 
 contract BundlerDepositHelper is Ownable {
     mapping(address => bool) public vaildEntryPoint;

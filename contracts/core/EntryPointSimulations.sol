@@ -2,9 +2,9 @@
 pragma solidity ^0.8.12;
 
 import "../interfaces/IEntryPointSimulations.sol";
-import "../interfaces/IAccount.sol";
+import "../@eth-infinitism-v0.4/interfaces/IAccount.sol";
 import "./EntryPointLogic.sol";
-import "../library/UserOperation.sol";
+import "../@eth-infinitism-v0.4/library/UserOperation.sol";
 
 contract EntryPointSimulations is IEntryPointSimulations, EntryPointLogic {
     constructor(address owner) EntryPointLogic(owner) {}

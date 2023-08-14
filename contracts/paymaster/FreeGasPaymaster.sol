@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IFreeGasPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
-import "../interfaces/IEntryPoint.sol";
+import "../@eth-infinitism-v0.4/interfaces/IEntryPoint.sol";
 
 contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     using UserOperationLib for UserOperation;

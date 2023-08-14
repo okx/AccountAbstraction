@@ -4,7 +4,7 @@ pragma solidity ^0.8.12;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/ISignatureValidator.sol";
-import "../../interfaces/IAccount.sol";
+import "../../@eth-infinitism-v0.4/interfaces/IAccount.sol";
 import "../common/Enum.sol";
 import "../common/SignatureDecoder.sol";
 import "./OwnerManager.sol";

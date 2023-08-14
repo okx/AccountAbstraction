@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "./IEntryPoint.sol";
-import "./IPaymaster.sol";
+import "../@eth-infinitism-v0.4/interfaces/IEntryPoint.sol";
+import "../@eth-infinitism-v0.4/interfaces/IPaymaster.sol";
 
 interface IEntryPointLogic is IEntryPoint {
     event HandleUserOpRevertReason(

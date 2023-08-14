@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "../library/UserOperation.sol";
+import "../@eth-infinitism-v0.4/library/UserOperation.sol";
 
 import "../wallet/SmartAccount.sol";
 import "../interfaces/IEntryPointSimulations.sol";
