@@ -34,6 +34,8 @@ interface IStorage {
 
     function setModuleWhitelist(address module, bool allowed) external;
 
+    function validateBundlerWhiteList(address bundler) external view;
+
     function validateModuleWhitelist(address module) external;
 
     function validateWalletWhitelist(address sender) external view;

@@ -8,22 +8,32 @@ describe("SmartAccount", function () {
 
     // setEntryPoint to owner to simplify testing
     let EntryPoint = owner.address;
+    let SimulationContract = owner.address;
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
+      "contracts/wallet/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
     );
     let defaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let SmartAccount = await ethers.getContractFactory("SmartAccount");
+    let StorageFactory = await ethers.getContractFactory("Storage");
+    let storage = await StorageFactory.deploy();
+
+    await storage.setBundlerOfficialWhitelist(owner.address, true);
+
+    let SmartAccount = await ethers.getContractFactory(
+      "contracts/wallet/SmartAccount.sol:SmartAccount"
+    );
     let smartAccount = await SmartAccount.deploy(
       EntryPoint,
+      SimulationContract,
       defaultCallbackHandler.address,
+      storage.address,
       "SA",
       "1.0"
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
+      "contracts/wallet/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let smartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       smartAccount.address,
@@ -46,7 +56,7 @@ describe("SmartAccount", function () {
     let AA = await SmartAccount.attach(events[0].args.proxy);
 
     let SmartAccountProxy = await ethers.getContractFactory(
-      "SmartAccountProxy"
+      "contracts/wallet/SmartAccountProxy.sol:SmartAccountProxy"
     );
     let aliceProxyAccount = await SmartAccountProxy.attach(
       events[0].args.proxy
@@ -63,81 +73,9 @@ describe("SmartAccount", function () {
 
     return {
       owner,
+      bundler,
       EntryPoint,
-      smartAccount,
-      userOpHelper,
-      defaultCallbackHandler,
-      alice,
-      AA,
-      aliceProxyAccount,
-      smartAccountProxyFactory,
-    };
-  }
-
-  async function deployWithEntry() {
-    let [owner, bundler, alice] = await ethers.getSigners();
-
-    // setEntryPoint to owner to simplify testing
-    let EntryPoint = owner.address;
-
-    let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
-    );
-
-    let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
-    let entryPoint = await MockEntryPointL1.deploy(owner.address);
-    let defaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
-
-    let SmartAccount = await ethers.getContractFactory("MockSmartAccount");
-    let smartAccount = await SmartAccount.deploy(
-      entryPoint.address,
-      defaultCallbackHandler.address,
-      "SA",
-      "1.0"
-    );
-
-    let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
-    );
-    let smartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
-      smartAccount.address,
-      owner.address
-    );
-
-    let initializeData = SmartAccount.interface.encodeFunctionData(
-      "Initialize",
-      [alice.address]
-    );
-
-    let tx = await smartAccountProxyFactory.createAccount(
-      smartAccount.address,
-      initializeData,
-      0
-    );
-
-    let events = await smartAccountProxyFactory.queryFilter("ProxyCreation");
-
-    let AA = await SmartAccount.attach(events[0].args.proxy);
-
-    let SmartAccountProxy = await ethers.getContractFactory(
-      "SmartAccountProxy"
-    );
-    let aliceProxyAccount = await SmartAccountProxy.attach(
-      events[0].args.proxy
-    );
-
-    let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper"
-    );
-    let userOpHelper = await UserOpHelperFactory.deploy(
-      ethers.constants.AddressZero,
-      EntryPoint,
-      owner.address
-    );
-
-    return {
-      owner,
-      entryPoint,
+      storage,
       smartAccount,
       userOpHelper,
       defaultCallbackHandler,
@@ -164,7 +102,11 @@ describe("SmartAccount", function () {
     it("should create account with different salt", async function () {
       let { smartAccount, alice, smartAccountProxyFactory, aliceProxyAccount } =
         await loadFixture(deploy);
-      let SmartAccount = await ethers.getContractFactory("SmartAccount");
+
+      let SmartAccount = await ethers.getContractFactory(
+        "contracts/wallet/SmartAccount.sol:SmartAccount"
+      );
+
       let initializeData = SmartAccount.interface.encodeFunctionData(
         "Initialize",
         [alice.address]
@@ -175,14 +117,21 @@ describe("SmartAccount", function () {
         initializeData,
         1
       );
+
       let events = await smartAccountProxyFactory.queryFilter("ProxyCreation");
+
       expect(events[1].args.proxy).to.not.equal(aliceProxyAccount.address);
       expect(events[1].args.singleton).to.equal(smartAccount.address);
     });
+
     it("should not revert with the same salt", async function () {
       let { smartAccount, alice, smartAccountProxyFactory, aliceProxyAccount } =
         await loadFixture(deploy);
-      let SmartAccount = await ethers.getContractFactory("SmartAccount");
+
+      let SmartAccount = await ethers.getContractFactory(
+        "contracts/wallet/SmartAccount.sol:SmartAccount"
+      );
+
       let initializeData = SmartAccount.interface.encodeFunctionData(
         "Initialize",
         [alice.address]
@@ -193,7 +142,9 @@ describe("SmartAccount", function () {
         initializeData,
         0
       );
+
       let res = await tx.wait();
+
       expect(res.status).to.equal(1);
     });
   });
@@ -284,6 +235,7 @@ describe("SmartAccount", function () {
 
     it("shuold execute with the guard", async function () {
       let { owner, smartAccount, alice, AA } = await loadFixture(deploy);
+
       let MockGuard = await ethers.getContractFactory("MockGuard");
       let mockGuard = await MockGuard.deploy();
 
@@ -650,8 +602,8 @@ describe("SmartAccount", function () {
 
   describe("execTransactionFromModule", function () {
     it("should execute a transaction with module", async function () {
-      let { owner, smartAccount, alice, AA, entryPoint } = await loadFixture(
-        deployWithEntry
+      let { owner, smartAccount, alice, AA, storage } = await loadFixture(
+        deploy
       );
 
       // deploy TestToken
@@ -670,7 +622,7 @@ describe("SmartAccount", function () {
 
       let MockModule = await ethers.getContractFactory("MockModule");
       let mockModule = await MockModule.deploy(AA.address);
-      await entryPoint.setModuleWhitelist(mockModule.address, true);
+      await storage.setModuleWhitelist(mockModule.address, true);
 
       // encode callData for  setGuard(mockGuard)
       let moduleCallData = smartAccount.interface.encodeFunctionData(
@@ -678,7 +630,7 @@ describe("SmartAccount", function () {
         [mockModule.address]
       );
 
-      await AA.execTransactionFromEntrypoint1(AA.address, 0, moduleCallData);
+      await AA.execTransactionFromEntrypoint(AA.address, 0, moduleCallData);
 
       await mockModule.execTransaction(testToken.address, 0, callData, 0);
 
@@ -687,8 +639,8 @@ describe("SmartAccount", function () {
     });
 
     it("should setFallbackHandler with module", async function () {
-      let { owner, smartAccount, alice, AA, entryPoint } = await loadFixture(
-        deployWithEntry
+      let { owner, smartAccount, storage, alice, AA } = await loadFixture(
+        deploy
       );
 
       // deploy TestToken
@@ -707,7 +659,7 @@ describe("SmartAccount", function () {
       ]);
 
       let mockModule = await MockModule.deploy(AA.address);
-      await entryPoint.setModuleWhitelist(mockModule.address, true);
+      await storage.setModuleWhitelist(mockModule.address, true);
       await testToken.mint(AA.address, oneEther.mul(2));
       let res = await testToken.balanceOf(AA.address);
 
@@ -717,7 +669,7 @@ describe("SmartAccount", function () {
         [mockModule.address]
       );
 
-      await AA.execTransactionFromEntrypoint1(AA.address, 0, moduleCallData);
+      await AA.execTransactionFromEntrypoint(AA.address, 0, moduleCallData);
       await mockModule.execTransaction(mockModule.address, 0, callData, 1);
 
       expect(await testToken.balanceOf(alice.address)).to.equal(oneEther);

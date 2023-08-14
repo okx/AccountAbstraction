@@ -18,6 +18,8 @@ contract SignatureManager is
 {
     using UserOperationLib for UserOperation;
 
+    uint256 internal constant NONCE_VALIDATION_FAILED = 2;
+
     bytes32 internal immutable HASH_NAME;
 
     bytes32 internal immutable HASH_VERSION;
@@ -171,6 +173,12 @@ contract SignatureManager is
             }("");
         }
 
+        unchecked {
+            if (userOp.nonce != nonce++) {
+                return NONCE_VALIDATION_FAILED;
+            }
+        }
+
         if (
             ECDSA.recover(
                 getUOPSignedHash(
@@ -198,6 +206,12 @@ contract SignatureManager is
                 value: missingAccountFunds,
                 gas: type(uint256).max
             }("");
+        }
+
+        unchecked {
+            if (userOp.nonce != nonce++) {
+                return NONCE_VALIDATION_FAILED;
+            }
         }
 
         if (

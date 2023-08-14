@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
-import "../wallet/SmartAccount.sol";
+import "../wallet-0.4/SmartAccount.sol";
 
 contract MockSmartAccount is SmartAccount {
     constructor(

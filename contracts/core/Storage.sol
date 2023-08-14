@@ -57,6 +57,15 @@ contract Storage is Ownable, IStorage {
         }
     }
 
+    function validateBundlerWhiteList(address bundler) public view {
+        if (!officialBundlerWhiteList[bundler]) {
+            require(
+                unrestrictedBundler && bundler == tx.origin,
+                "called by illegal bundler"
+            );
+        }
+    }
+
     function validateWalletWhitelist(address sender) public view {
         if (!unrestrictedWallet) {
             require(

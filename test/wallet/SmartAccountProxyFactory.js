@@ -8,22 +8,32 @@ describe("SmartAccountProxyFactory", function () {
 
     // setEntryPoint to owner to simplify testing
     let EntryPoint = owner.address;
+    let SimulationContract = owner.address;
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
+      "contracts/wallet/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
     );
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let SmartAccountFactory = await ethers.getContractFactory("SmartAccount");
+    let StorageFactory = await ethers.getContractFactory("Storage");
+    let storage = await StorageFactory.deploy();
+
+    await storage.setBundlerOfficialWhitelist(owner.address, true);
+
+    let SmartAccountFactory = await ethers.getContractFactory(
+      "contracts/wallet/SmartAccount.sol:SmartAccount"
+    );
     let SmartAccount = await SmartAccountFactory.deploy(
       EntryPoint,
+      SimulationContract,
       DefaultCallbackHandler.address,
+      storage.address,
       "SA",
-      "1"
+      "1.0"
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
+      "contracts/wallet/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let SmartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       SmartAccount.address,
@@ -131,7 +141,7 @@ describe("SmartAccountProxyFactory", function () {
 
     await expect(await SmartAccountProxyFactory.walletWhiteList(AA.address)).to
       .be.true;
-    await expect(await AA.EntryPoint()).to.be.equal(EntryPoint);
+    await expect(await AA.ENTRYPOINT()).to.be.equal(EntryPoint);
     await expect(await AA.getOwner()).to.be.equal(Alice.address);
     await expect(await AA.getFallbackHandler()).to.be.equal(
       DefaultCallbackHandler.address

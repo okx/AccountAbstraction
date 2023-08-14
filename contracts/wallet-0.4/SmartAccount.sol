@@ -23,48 +23,28 @@ contract SmartAccount is
     GuardManager,
     SignatureManager
 {
-    IStorage public immutable STORAGE;
-
-    address public immutable ENTRYPOINT;
-    address public immutable SIMULATION;
-    address public immutable FALLBACKHANDLER;
+    address public immutable EntryPoint;
+    address public immutable FallbackHandler;
 
     constructor(
-        address _entryPoint,
-        address _simulation,
-        address _fallbackHandler,
-        address _storage,
+        address _EntryPoint,
+        address _FallbackHandler,
         string memory _name,
         string memory _version
     ) SignatureManager(_name, _version) {
-        ENTRYPOINT = _entryPoint;
-        SIMULATION = _simulation;
-        FALLBACKHANDLER = _fallbackHandler;
-        STORAGE = IStorage(_storage);
+        EntryPoint = _EntryPoint;
+        FallbackHandler = _FallbackHandler;
     }
 
-    modifier onlyEntryPointOrSimulation() {
-        require(
-            msg.sender == ENTRYPOINT || msg.sender == SIMULATION,
-            "Not from entrypoint"
-        );
-        _;
-    }
-
-    modifier onlyWhiteListedBundler() {
-        STORAGE.validateBundlerWhiteList(tx.origin);
-        _;
-    }
-
-    modifier onlyWhiteListedModule() {
-        STORAGE.validateModuleWhitelist(msg.sender);
+    modifier onlyEntryPoint() {
+        require(msg.sender == EntryPoint, "Not from entrypoint");
         _;
     }
 
     function Initialize(address _owner) external {
         require(getOwner() == address(0), "account: have set up");
         initializeOwners(_owner);
-        initializeFallbackHandler(FALLBACKHANDLER);
+        initializeFallbackHandler(FallbackHandler);
         initializeModules();
     }
 
@@ -73,8 +53,22 @@ contract SmartAccount is
         bytes32 userOpHash,
         address aggregatorAddress,
         uint256 missingAccountFunds
-    ) public override onlyEntryPointOrSimulation returns (uint256 deadline) {
+    ) public override onlyEntryPoint returns (uint256 deadline) {
         deadline = super.validateUserOp(
+            userOp,
+            userOpHash,
+            aggregatorAddress,
+            missingAccountFunds
+        );
+    }
+
+    function validateUserOpWithoutSig(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        address aggregatorAddress,
+        uint256 missingAccountFunds
+    ) public override onlyEntryPoint returns (uint256 deadline) {
+        deadline = super.validateUserOpWithoutSig(
             userOp,
             userOpHash,
             aggregatorAddress,
@@ -86,19 +80,19 @@ contract SmartAccount is
         address to,
         uint256 value,
         bytes calldata data
-    ) public onlyEntryPointOrSimulation onlyWhiteListedBundler {
+    ) public onlyEntryPoint {
         executeWithGuard(to, value, data);
     }
 
     function execTransactionFromEntrypointBatch(
         ExecuteParams[] calldata _params
-    ) external onlyEntryPointOrSimulation onlyWhiteListedBundler {
+    ) external onlyEntryPoint {
         executeWithGuardBatch(_params);
     }
 
     function execTransactionFromEntrypointBatchRevertOnFail(
         ExecuteParams[] calldata _params
-    ) external onlyEntryPointOrSimulation onlyWhiteListedBundler {
+    ) external onlyEntryPoint {
         execTransactionBatchRevertOnFail(_params);
     }
 
@@ -107,7 +101,9 @@ contract SmartAccount is
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    ) public override onlyWhiteListedModule {
+    ) public override {
+        IStorage(EntryPoint).validateModuleWhitelist(msg.sender);
+
         if (operation == Enum.Operation.Call) {
             ModuleManager.execTransactionFromModule(to, value, data, operation);
         } else {
