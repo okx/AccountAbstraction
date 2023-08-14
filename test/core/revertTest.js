@@ -25,11 +25,13 @@ describe("EntryPoint", function () {
     );
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
+      "contracts/wallet-0.4/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
     );
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let SmartAccountFactory = await ethers.getContractFactory("SmartAccount");
+    let SmartAccountFactory = await ethers.getContractFactory(
+      "contracts/wallet-0.4/SmartAccount.sol:SmartAccount"
+    );
     let SmartAccount = await SmartAccountFactory.deploy(
       EntryPoint.address,
       DefaultCallbackHandler.address,
@@ -38,7 +40,7 @@ describe("EntryPoint", function () {
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
+      "contracts/wallet-0.4/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let SmartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       SmartAccount.address,
@@ -83,8 +85,7 @@ describe("EntryPoint", function () {
       EntryPoint.address
     );
 
-    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
-
+    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
 
     await PriceOracle.connect(owner).setPriceFeed(
       TestToken.address,
@@ -352,7 +353,10 @@ describe("EntryPoint", function () {
         SmartAccountProxyFactory
       );
 
-      let smartAccount = await ethers.getContractAt("SmartAccount", sender);
+      let smartAccount = await ethers.getContractAt(
+        "contracts/wallet-0.4/SmartAccount.sol:SmartAccount",
+        sender
+      );
 
       let tx = smartAccount.execTransactionFromModule(
         Alice.address,
