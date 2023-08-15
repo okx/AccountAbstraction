@@ -8,6 +8,8 @@ describe("TokenPaymaster", function () {
 
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
     let entryPointContract = await MockEntryPointL1.deploy(owner.address);
+    let entryPointContractV04 = await MockEntryPointL1.deploy(owner.address);
+    let entryPointContractV06 = await MockEntryPointL1.deploy(owner.address);
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
       "MockChainlinkOracle",
     );
@@ -40,6 +42,8 @@ describe("TokenPaymaster", function () {
       signer.address,
       owner.address,
       entryPoint.address,
+      entryPointContractV04.address,
+      entryPointContractV06.address
     );
 
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address);
@@ -72,6 +76,8 @@ describe("TokenPaymaster", function () {
       signer.address,
       owner.address,
       entryPointContract.address,
+      entryPointContractV04.address,
+      entryPointContractV06.address,
     );
 
     await tokenPaymasterWithEntryPoint
@@ -90,6 +96,8 @@ describe("TokenPaymaster", function () {
       userOpHelper,
       entryPointContract,
       tokenPaymasterWithEntryPoint,
+      entryPointContractV04,
+      entryPointContractV06,
     };
   }
   describe("constructor", function () {
@@ -106,7 +114,7 @@ describe("TokenPaymaster", function () {
       let defaultPriceOracle = await tokenPaymaster.priceOracle();
       await expect(defaultPriceOracle).to.equal(priceOracle.address);
 
-      let defaultEntryPoint = await tokenPaymaster.supportedEntryPoint();
+      let defaultEntryPoint = await tokenPaymaster.supportedSimulateEntryPoint();
       await expect(defaultEntryPoint).to.equal(entryPoint.address);
     });
   });
@@ -590,6 +598,7 @@ describe("TokenPaymaster", function () {
 
       expect(
         await tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),
@@ -612,6 +621,7 @@ describe("TokenPaymaster", function () {
       await tokenPaymasterWithEntryPoint.addToWhitelist(addresses);
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),
@@ -634,7 +644,7 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymasterWithEntryPoint
           .connect(alice)
-          .withdrawDepositNativeToken(alice.address, withdrawAmount),
+          .withdrawDepositNativeToken(entryPointContract.address, alice.address, withdrawAmount),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -651,6 +661,7 @@ describe("TokenPaymaster", function () {
       await tokenPaymasterWithEntryPoint.addToWhitelist(addresses);
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),

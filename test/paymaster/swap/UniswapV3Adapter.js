@@ -40,6 +40,8 @@ describe("UniswapV3Adapter", function () {
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
@@ -181,6 +183,7 @@ describe("UniswapV3Adapter", function () {
       );
 
       await TokenPaymaster.connect(owner).swapToNative(
+        EntryPoint.address,
         TestToken.address,
         1000000,
         0

@@ -13,6 +13,8 @@ describe("FreeGasPaymaster", function () {
     let FreeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
@@ -36,7 +38,7 @@ describe("FreeGasPaymaster", function () {
     let defaultOwner = await FreeGasPaymaster.owner();
     await expect(defaultOwner).to.equal(owner.address);
 
-    let defaultEntryPoint = await FreeGasPaymaster.supportedEntryPoint();
+    let defaultEntryPoint = await FreeGasPaymaster.supportedSimulateEntryPoint();
     await expect(defaultEntryPoint).to.equal(EntryPoint.address);
   });
 

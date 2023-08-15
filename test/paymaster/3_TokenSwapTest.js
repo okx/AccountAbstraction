@@ -11,6 +11,8 @@ describe("TokenPaymaster", function () {
 
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
     let entryPoint = await MockEntryPointL1.deploy(owner.address);
+    let entryPointV04 = await MockEntryPointL1.deploy(owner.address);
+    let entryPointV06 = await MockEntryPointL1.deploy(owner.address);
 
     let MockWETH9 = await ethers.getContractFactory("WETH9");
 
@@ -64,7 +66,9 @@ describe("TokenPaymaster", function () {
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPoint.address
+      entryPoint.address,
+      entryPointV04.address,
+      entryPointV06.address
     );
 
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address)
@@ -148,7 +152,7 @@ describe("TokenPaymaster", function () {
 
       await tokenPaymaster
         .connect(owner)
-        .swapToNative(testToken.address, "200000000", 0);
+        .swapToNative(entryPoint.address, testToken.address, "200000000", 0);
       let balance = await ethers.provider.getBalance(tokenPaymaster.address);
       await expect(balance).to.equal(0);
 
@@ -186,7 +190,7 @@ describe("TokenPaymaster", function () {
       expect(
         await tokenPaymaster
           .connect(owner)
-          .swapToNative(testToken.address, "200000000", 0)
+          .swapToNative(entryPoint.address, testToken.address, "200000000", 0)
       )
         .to.emit(tokenPaymaster, "SwappedToNative")
         .withArgs(testToken.address, "200000000", "99690060900928177");

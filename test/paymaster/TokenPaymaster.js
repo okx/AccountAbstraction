@@ -39,6 +39,8 @@ describe("TokenPaymaster", function () {
       signer.address,
       owner.address,
       EntryPoint.address,
+      EntryPoint.address,
+      EntryPoint.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
@@ -121,7 +123,7 @@ describe("TokenPaymaster", function () {
     );
     await expect(minTokenPrice).to.equal(minPrice);
 
-    let defaultEntryPoint = await TokenPaymaster.supportedEntryPoint();
+    let defaultEntryPoint = await TokenPaymaster.supportedSimulateEntryPoint();
     await expect(defaultEntryPoint).to.equal(EntryPoint.address);
   });
 
@@ -350,6 +352,8 @@ describe("TokenPaymaster", function () {
       signer.address,
       owner.address,
       EntryPoint.address,
+      EntryPoint.address,
+      EntryPoint.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
@@ -386,6 +390,7 @@ describe("TokenPaymaster", function () {
     await TokenPaymaster.connect(owner).setSwapAdapter(SwapHelper.address);
 
     await TokenPaymaster.connect(owner).swapToNative(
+      EntryPoint.address,
       TestToken.address,
       1000000,
       0,

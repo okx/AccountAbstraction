@@ -59,6 +59,8 @@ describe("TradeJoeV2Adapter", function () {
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
@@ -267,6 +269,7 @@ describe("TradeJoeV2Adapter", function () {
 
       await expect(
         TokenPaymaster.connect(owner).swapToNative(
+          EntryPoint.address,
           TestToken.address,
           1000000,
           0
@@ -301,6 +304,7 @@ describe("TradeJoeV2Adapter", function () {
 
       await expect(
         TokenPaymaster.connect(owner).swapToNative(
+          EntryPoint.address,
           TestToken.address,
           1000000,
           0
@@ -345,6 +349,7 @@ describe("TradeJoeV2Adapter", function () {
 
       await expect(
         TokenPaymaster.connect(owner).swapToNative(
+          EntryPoint.address,
           TestToken.address,
           ethers.utils.parseEther("100000"),
           0
@@ -385,6 +390,7 @@ describe("TradeJoeV2Adapter", function () {
       await TokenPaymaster.connect(owner).setSwapAdapter(SwapHelper.address);
 
       await TokenPaymaster.connect(owner).swapToNative(
+        EntryPoint.address,
         TestToken.address,
         1000000,
         0

@@ -12,11 +12,15 @@ describe("FreeGasPaymaster", function () {
     );
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
     let entryPoint = await MockEntryPointL1.deploy(owner.address);
+    let entryPointV04 = await MockEntryPointL1.deploy(owner.address);
+    let entryPointV06 = await MockEntryPointL1.deploy(owner.address);
 
     let freeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPoint.address
+      entryPoint.address,
+      entryPointV04.address,
+      entryPointV06.address,
     );
 
     let TestToken = await ethers.getContractFactory("TestToken");
@@ -29,6 +33,8 @@ describe("FreeGasPaymaster", function () {
       freeGasPaymaster,
       entryPoint,
       testToken,
+      entryPointV04,
+      entryPointV06
     };
   }
 
@@ -44,7 +50,7 @@ describe("FreeGasPaymaster", function () {
       let defaultOwner = await freeGasPaymaster.owner();
       await expect(defaultOwner).to.equal(owner.address);
 
-      let defaultEntryPoint = await freeGasPaymaster.supportedEntryPoint();
+      let defaultEntryPoint = await freeGasPaymaster.supportedSimulateEntryPoint();
       await expect(defaultEntryPoint).to.equal(entryPoint.address);
     });
 
@@ -212,6 +218,7 @@ describe("FreeGasPaymaster", function () {
 
       expect(
         await freeGasPaymaster.withdrawDepositNativeToken(
+          entryPoint.address,
           Alice.address,
           withdrawAmount
         )
@@ -235,6 +242,7 @@ describe("FreeGasPaymaster", function () {
       await freeGasPaymaster.addToWhitelist(addresses);
       await expect(
         freeGasPaymaster.withdrawDepositNativeToken(
+          entryPoint.address,
           Alice.address,
           withdrawAmount
         )
@@ -258,7 +266,7 @@ describe("FreeGasPaymaster", function () {
       await expect(
         freeGasPaymaster
           .connect(Alice)
-          .withdrawDepositNativeToken(Alice.address, withdrawAmount)
+          .withdrawDepositNativeToken(entryPoint.address, Alice.address, withdrawAmount)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -276,6 +284,7 @@ describe("FreeGasPaymaster", function () {
       await freeGasPaymaster.addToWhitelist(addresses);
       await expect(
         freeGasPaymaster.withdrawDepositNativeToken(
+          entryPoint.address,
           Alice.address,
           withdrawAmount
         )
