@@ -89,7 +89,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     }
 
     function postOp(
-        PostOpMode,
+        PostOpMode mode,
         bytes calldata context,
         uint256 gasCost
     ) external override onlyEntryPoint(msg.sender) {
@@ -101,6 +101,17 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             uint256 postOpGas
         ) = abi.decode(context, (bytes32, address, address, uint256, uint256));
         uint256 ERC20Cost = ((gasCost + postOpGas) * exchangeRate) / 1e18;
+
+        if (mode == IPaymaster.PostOpMode.opReverted) {
+            revert PostOPModeRevert(
+                userOpHash,
+                sender,
+                token,
+                ERC20Cost,
+                gasCost + postOpGas
+            );
+        }
+
         IERC20(token).safeTransferFrom(sender, address(this), ERC20Cost);
         emit TokenCost(
             userOpHash,
