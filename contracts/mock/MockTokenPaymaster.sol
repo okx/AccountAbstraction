@@ -25,7 +25,9 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMax;
     mapping(address => uint256) public tokenPriceLimitMin;
 
-    address public immutable supportedEntryPoint;
+    address public immutable supportedSimulateEntryPoint;
+    address public immutable supportedEntryPointV04;
+    address public immutable supportedEntryPointV06;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -43,20 +45,26 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
         address _verifyingSigner,
         address _priceOracle,
         address _owner,
-        address _supportedEntryPoint
+        address _supportedSimulateEntryPoint,
+        address _supportedEntryPointV04,
+        address _supportedEntryPointV06
     ) {
         verifyingSigner = _verifyingSigner;
         priceOracle = _priceOracle;
-        supportedEntryPoint = _supportedEntryPoint;
+        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
+        supportedEntryPointV04 = _supportedEntryPointV04;
+        supportedEntryPointV06 = _supportedEntryPointV06;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
 
     receive() external payable {}
 
-    modifier onlyEntryPoint() {
+    modifier onlyEntryPoint(address entrypoint) {
         require(
-            msg.sender == supportedEntryPoint,
+            entrypoint == supportedEntryPointV06 ||
+                entrypoint == supportedSimulateEntryPoint ||
+                entrypoint == supportedEntryPointV04,
             "Not from supported entrypoint"
         );
         _;
@@ -87,7 +95,7 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
         PostOpMode,
         bytes calldata context,
         uint256 gasCost
-    ) external override onlyEntryPoint {
+    ) external override onlyEntryPoint(msg.sender) {
         (
             bytes32 userOpHash,
             address sender,
@@ -237,19 +245,21 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     }
 
     function withdrawDepositNativeToken(
+        address entryPoint,
         address payable withdrawAddress,
         uint256 amount
     ) public onlyOwner onlyWhitelisted(withdrawAddress) {
-        IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
+        IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
 
     // ERC20 only
     function swapToNative(
+        address entryPoint,
         IERC20 token,
         uint256 amount,
         uint256 minAmountOut
-    ) external onlyOwner {
+    ) external onlyOwner onlyEntryPoint(entryPoint) {
         address nativeAddress = ISwapAdapter(payable(swapAdapter))
             .nativeToken();
         minAmountOut = Math.max(
@@ -276,9 +286,7 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
             "SwapHelper: insufficient amountOut"
         );
 
-        IEntryPoint(supportedEntryPoint).depositTo{value: balance}(
-            address(this)
-        );
+        IEntryPoint(entryPoint).depositTo{value: balance}(address(this));
 
         emit SwappedToNative(address(token), amount, balance);
     }

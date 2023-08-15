@@ -16,6 +16,8 @@ describe("EntryPoint", function () {
     let FreeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
@@ -82,6 +84,8 @@ describe("EntryPoint", function () {
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
@@ -1331,6 +1335,8 @@ describe("EntryPoint", function () {
           signer.address,
           PriceOracle.address,
           owner.address,
+          EntryPoint.address,
+          EntryPoint.address,
           EntryPoint.address
         );
 
@@ -1846,6 +1852,8 @@ describe("EntryPoint", function () {
           signer.address,
           PriceOracle.address,
           owner.address,
+          EntryPoint.address,
+          EntryPoint.address,
           EntryPoint.address
         );
 

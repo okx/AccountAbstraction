@@ -73,6 +73,8 @@ describe("Gas", function () {
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
+      EntryPoint.address,
+      EntryPoint.address,
       EntryPoint.address
     );
 
