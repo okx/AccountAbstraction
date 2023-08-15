@@ -18,37 +18,35 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     uint256 internal constant SIG_VALIDATION_FAILED = 1;
     address public immutable verifyingSigner;
     address public immutable ADDRESS_THIS;
-    address public immutable supportedEntryPoint;
-    address public immutable supportedUnifiedEntryPointV04;
-    address public immutable supportedUnifiedEntryPointV06;
+    address public immutable supportedSimulateEntryPoint;
+    address public immutable supportedEntryPointV04;
+    address public immutable supportedEntryPointV06;
     mapping(address => bool) public whitelist;
 
     constructor(
         address _verifyingSigner,
         address _owner,
-        address _supportedEntryPoint,
-        address _supportedUnifiedEntryPointV04,
-        address _supportedUnifiedEntryPointV06
-
+        address _supportedSimulateEntryPoint,
+        address _supportedEntryPointV04,
+        address _supportedEntryPointV06
     ) {
         verifyingSigner = _verifyingSigner;
         _transferOwnership(_owner);
-        supportedEntryPoint = _supportedEntryPoint;
-        supportedUnifiedEntryPointV04 = _supportedUnifiedEntryPointV04;
-        supportedUnifiedEntryPointV06 = _supportedUnifiedEntryPointV06;
+        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
+        supportedEntryPointV04 = _supportedEntryPointV04;
+        supportedEntryPointV06 = _supportedEntryPointV06;
         ADDRESS_THIS = address(this);
     }
 
     modifier onlyEntryPoint(address entrypoint) {
         require(
-            entrypoint == supportedUnifiedEntryPointV06 ||
-            entrypoint == supportedEntryPoint ||
-            entrypoint == supportedUnifiedEntryPointV04,
+            entrypoint == supportedEntryPointV06 ||
+                entrypoint == supportedSimulateEntryPoint ||
+                entrypoint == supportedEntryPointV04,
             "Not from supported entrypoint"
         );
         _;
     }
-
 
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
@@ -84,8 +82,13 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
         address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) onlyEntryPoint(entryPoint) {
-        IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
+    )
+        public
+        onlyOwner
+        onlyWhitelisted(withdrawAddress)
+        onlyEntryPoint(entryPoint)
+    {
+        IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
 

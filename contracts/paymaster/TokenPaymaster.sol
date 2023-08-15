@@ -24,9 +24,9 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMax;
     mapping(address => uint256) public tokenPriceLimitMin;
 
-    address public immutable supportedEntryPoint;
-    address public immutable supportedUnifiedEntryPointV04;
-    address public immutable supportedUnifiedEntryPointV06;
+    address public immutable supportedSimulateEntryPoint;
+    address public immutable supportedEntryPointV04;
+    address public immutable supportedEntryPointV06;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -43,14 +43,14 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     constructor(
         address _verifyingSigner,
         address _owner,
-        address _supportedEntryPoint,
-        address _supportedUnifiedEntryPointV04,
-        address _supportedUnifiedEntryPointV06
+        address _supportedSimulateEntryPoint,
+        address _supportedEntryPointV04,
+        address _supportedEntryPointV06
     ) {
         verifyingSigner = _verifyingSigner;
-        supportedEntryPoint = _supportedEntryPoint;
-        supportedUnifiedEntryPointV04 = _supportedUnifiedEntryPointV04;
-        supportedUnifiedEntryPointV06 = _supportedUnifiedEntryPointV06;
+        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
+        supportedEntryPointV04 = _supportedEntryPointV04;
+        supportedEntryPointV06 = _supportedEntryPointV06;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
@@ -59,9 +59,9 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
 
     modifier onlyEntryPoint(address entrypoint) {
         require(
-            entrypoint == supportedUnifiedEntryPointV06 ||
-            entrypoint == supportedEntryPoint ||
-            entrypoint == supportedUnifiedEntryPointV04,
+            entrypoint == supportedEntryPointV06 ||
+                entrypoint == supportedSimulateEntryPoint ||
+                entrypoint == supportedEntryPointV04,
             "Not from supported entrypoint"
         );
         _;
@@ -89,7 +89,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     }
 
     function postOp(
-        PostOpMode mode,
+        PostOpMode,
         bytes calldata context,
         uint256 gasCost
     ) external override onlyEntryPoint(msg.sender) {
@@ -101,17 +101,6 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             uint256 postOpGas
         ) = abi.decode(context, (bytes32, address, address, uint256, uint256));
         uint256 ERC20Cost = ((gasCost + postOpGas) * exchangeRate) / 1e18;
-
-        if (mode == IPaymaster.PostOpMode.opReverted) {
-            revert PostOPModeRevert(
-                userOpHash,
-                sender,
-                token,
-                ERC20Cost,
-                gasCost + postOpGas
-            );
-        }
-
         IERC20(token).safeTransferFrom(sender, address(this), ERC20Cost);
         emit TokenCost(
             userOpHash,
@@ -260,7 +249,12 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) onlyEntryPoint(entryPoint) {
+    )
+        public
+        onlyOwner
+        onlyWhitelisted(withdrawAddress)
+        onlyEntryPoint(entryPoint)
+    {
         IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
@@ -299,9 +293,9 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             "TokenPaymaster: insufficient amountOut"
         );
 
-        IEntryPoint(entryPoint).depositTo{
-            value: address(this).balance
-        }(address(this));
+        IEntryPoint(entryPoint).depositTo{value: address(this).balance}(
+            address(this)
+        );
 
         emit SwappedToNative(address(token), amount, balance);
     }

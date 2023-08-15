@@ -23,12 +23,4 @@ interface ITokenPaymaster is IPaymaster {
         uint256 ERC20Cost,
         uint256 gasCost
     );
-
-    error PostOPModeRevert(
-        bytes32 hash, 
-        address sender, 
-        address token, 
-        uint256 erc20cost, 
-        uint256 gascost
-    );
 }
