@@ -182,6 +182,48 @@ describe("SmartAccount", function () {
   });
 
   describe("execute", function () {
+    it("should revert if a not bundler call", async function () {
+      let { owner, smartAccount, storage, alice, AA } = await loadFixture(
+        deploy
+      );
+
+      await storage.setBundlerOfficialWhitelist(owner.address, false);
+
+      // send 1 ether to AA from owner
+      let oneEther = ethers.utils.parseEther("1.0");
+      await owner.sendTransaction({
+        value: oneEther,
+        to: AA.address,
+      });
+
+      let tx = AA.execTransactionFromEntrypoint(alice.address, oneEther, "0x");
+
+      await expect(tx).to.be.revertedWith("called by illegal bundler");
+    });
+
+    it("should revert if not from entrypoint", async function () {
+      let { owner, bundler, smartAccount, storage, alice, AA } =
+        await loadFixture(deploy);
+
+      await storage.setBundlerOfficialWhitelist(owner.address, false);
+      await storage.setBundlerOfficialWhitelist(bundler.address, true);
+
+      // send 1 ether to AA from owner
+      let oneEther = ethers.utils.parseEther("1.0");
+      await owner.sendTransaction({
+        value: oneEther,
+        to: AA.address,
+      });
+
+      let tx = AA.connect(bundler).execTransactionFromEntrypoint(
+        alice.address,
+        oneEther,
+        "0x"
+      );
+
+      await expect(tx).to.be.revertedWith("Not from entrypoint");
+    });
+
     it("should execute a transaction", async function () {
       let { owner, smartAccount, alice, AA } = await loadFixture(deploy);
 
@@ -272,7 +314,7 @@ describe("SmartAccount", function () {
   });
 
   describe("upgrade", function () {
-    it("shuold upgrade proxy", async function () {
+    it("should upgrade proxy", async function () {
       let { alice, AA, aliceProxyAccount } = await loadFixture(deploy);
 
       // enocde functioncall of updateImplement
@@ -289,6 +331,54 @@ describe("SmartAccount", function () {
 
       let newSingleton = await aliceProxyAccount.masterCopy();
       await expect(newSingleton).to.equal(ethers.constants.AddressZero);
+    });
+
+    it("should upgrade proxy and call function", async function () {
+      let {
+        owner,
+        EntryPoint,
+        smartAccount,
+        defaultCallbackHandler,
+        alice,
+        AA,
+        aliceProxyAccount,
+      } = await loadFixture(deploy);
+
+      // send 1 ether to AA from owner
+      let oneEther = ethers.utils.parseEther("1.0");
+      await owner.sendTransaction({
+        value: oneEther,
+        to: AA.address,
+      });
+
+      // enocde functioncall of updateImplement
+      let calldata = AA.interface.encodeFunctionData("enableModule", [
+        alice.address,
+      ]);
+
+      let SmartAccount0_4 = await ethers.getContractFactory(
+        "contracts/wallet-0.4/SmartAccount.sol:SmartAccount"
+      );
+      let smartAccount0_4 = await SmartAccount0_4.deploy(
+        EntryPoint,
+        defaultCallbackHandler.address,
+        "SA",
+        "1.0"
+      );
+
+      let updateImplementCalldata = AA.interface.encodeFunctionData(
+        "updateImplementAndCall",
+        [smartAccount0_4.address, calldata]
+      );
+
+      let tx = await AA.execTransactionFromEntrypoint(
+        AA.address,
+        0,
+        updateImplementCalldata
+      );
+
+      let newSingleton = await aliceProxyAccount.masterCopy();
+      await expect(newSingleton).to.equal(smartAccount0_4.address);
     });
   });
 

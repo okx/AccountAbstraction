@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import "../@eth-infinitism-v0.4/library/UserOperation.sol";
 
-import "../wallet/SmartAccount.sol";
+import "../wallet-0.4/SmartAccount.sol";
 import "../interfaces/IEntryPointSimulations.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";

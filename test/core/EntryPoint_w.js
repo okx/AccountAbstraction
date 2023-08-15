@@ -43,7 +43,7 @@ describe("EntryPoint", function () {
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "contracts/wallet-0.4/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
+      "contracts/wallet/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let SmartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       SmartAccount.address,

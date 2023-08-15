@@ -4,19 +4,21 @@ pragma solidity ^0.8.12;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/ISignatureValidator.sol";
-import "../../@eth-infinitism-v0.4/interfaces/IAccount.sol";
+import "../../@eth-infinitism-v0.6/core/BaseAccount.sol";
 import "../common/Enum.sol";
 import "../common/SignatureDecoder.sol";
 import "./OwnerManager.sol";
 
 contract SignatureManager is
-    IAccount,
+    BaseAccount,
     ISignatureValidatorConstants,
     Enum,
     OwnerManager,
     SignatureDecoder
 {
     using UserOperationLib for UserOperation;
+
+    IEntryPoint internal immutable ENTRYPOINT;
 
     bytes32 internal immutable HASH_NAME;
 
@@ -27,8 +29,6 @@ contract SignatureManager is
     address internal immutable ADDRESS_THIS;
 
     bytes32 internal immutable EIP712_ORDER_STRUCT_SCHEMA_HASH;
-
-    uint256 internal constant SIG_VALIDATION_FAILED = 1;
 
     struct SignMessage {
         address sender;
@@ -47,7 +47,9 @@ contract SignatureManager is
 
     /* solhint-enable var-name-mixedcase */
 
-    constructor(string memory name, string memory version) {
+    constructor(address entrypoint, string memory name, string memory version) {
+        ENTRYPOINT = IEntryPoint(entrypoint);
+
         HASH_NAME = keccak256(bytes(name));
         HASH_VERSION = keccak256(bytes(version));
         TYPE_HASH = keccak256(
@@ -161,14 +163,18 @@ contract SignatureManager is
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32,
-        address,
         uint256 missingAccountFunds
-    ) public virtual returns (uint256) {
+    ) public virtual override returns (uint256) {
         if (missingAccountFunds != 0) {
             payable(msg.sender).call{
                 value: missingAccountFunds,
                 gas: type(uint256).max
             }("");
+        }
+
+        uint256 deadline = uint256(bytes32(userOp.signature[1:33]));
+        if (deadline > type(uint48).max) {
+            return SIG_VALIDATION_FAILED;
         }
 
         if (
@@ -183,37 +189,26 @@ contract SignatureManager is
         ) {
             return SIG_VALIDATION_FAILED;
         } else {
+            return
+                _packValidationData(
+                    ValidationData(address(0), 0, uint48(deadline))
+                );
+        }
+    }
+
+    function _validateSignature(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256 validationData) {
+        if (ECDSA.recover(userOpHash, userOp.signature[33:]) != owner) {
+            return SIG_VALIDATION_FAILED;
+        } else {
             return uint256(bytes32(userOp.signature[1:33]));
         }
     }
 
-    function validateUserOpWithoutSig(
-        UserOperation calldata userOp,
-        bytes32,
-        address,
-        uint256 missingAccountFunds
-    ) public virtual returns (uint256) {
-        if (missingAccountFunds != 0) {
-            payable(msg.sender).call{
-                value: missingAccountFunds,
-                gas: type(uint256).max
-            }("");
-        }
-
-        if (
-            ECDSA.recover(
-                getUOPSignedHash(
-                    SignatureType(uint8(bytes1(userOp.signature[0:1]))),
-                    msg.sender,
-                    userOp
-                ),
-                userOp.signature[33:]
-            ) != owner
-        ) {
-            return uint256(bytes32(userOp.signature[1:33]));
-        } else {
-            return uint256(bytes32(userOp.signature[1:33]));
-        }
+    function entryPoint() public view virtual override returns (IEntryPoint) {
+        return ENTRYPOINT;
     }
 
     function isValidSignature(

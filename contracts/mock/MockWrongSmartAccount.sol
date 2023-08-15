@@ -2,15 +2,15 @@
 pragma solidity ^0.8.12;
 
 import "../interfaces/IStorage.sol";
-import "../wallet/base/SignatureManager.sol";
-import "../wallet/base/ModuleManager.sol";
-import "../wallet/base/OwnerManager.sol";
-import "../wallet/base/FallbackManager.sol";
-import "../wallet/base/GuardManager.sol";
-import "../wallet/common/EtherPaymentFallback.sol";
-import "../wallet/common/Singleton.sol";
-import "../wallet/common/SignatureDecoder.sol";
-import "../wallet/common/SecuredTokenTransfer.sol";
+import "../wallet-0.4/base/SignatureManager.sol";
+import "../wallet-0.4/base/ModuleManager.sol";
+import "../wallet-0.4/base/OwnerManager.sol";
+import "../wallet-0.4/base/FallbackManager.sol";
+import "../wallet-0.4/base/GuardManager.sol";
+import "../wallet-0.4/common/EtherPaymentFallback.sol";
+import "../wallet-0.4/common/Singleton.sol";
+import "../wallet-0.4/common/SignatureDecoder.sol";
+import "../wallet-0.4/common/SecuredTokenTransfer.sol";
 
 contract MockWrongSmartAccount is
     EtherPaymentFallback,

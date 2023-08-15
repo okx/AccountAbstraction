@@ -141,7 +141,7 @@ describe("SmartAccountProxyFactory", function () {
 
     await expect(await SmartAccountProxyFactory.walletWhiteList(AA.address)).to
       .be.true;
-    await expect(await AA.ENTRYPOINT()).to.be.equal(EntryPoint);
+    await expect(await AA.entryPoint()).to.be.equal(EntryPoint);
     await expect(await AA.getOwner()).to.be.equal(Alice.address);
     await expect(await AA.getFallbackHandler()).to.be.equal(
       DefaultCallbackHandler.address

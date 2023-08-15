@@ -25,7 +25,6 @@ contract SmartAccount is
 {
     IStorage public immutable STORAGE;
 
-    address public immutable ENTRYPOINT;
     address public immutable SIMULATION;
     address public immutable FALLBACKHANDLER;
 
@@ -36,8 +35,7 @@ contract SmartAccount is
         address _storage,
         string memory _name,
         string memory _version
-    ) SignatureManager(_name, _version) {
-        ENTRYPOINT = _entryPoint;
+    ) SignatureManager(_entryPoint, _name, _version) {
         SIMULATION = _simulation;
         FALLBACKHANDLER = _fallbackHandler;
         STORAGE = IStorage(_storage);
@@ -45,7 +43,7 @@ contract SmartAccount is
 
     modifier onlyEntryPointOrSimulation() {
         require(
-            msg.sender == ENTRYPOINT || msg.sender == SIMULATION,
+            msg.sender == address(entryPoint()) || msg.sender == SIMULATION,
             "Not from entrypoint"
         );
         _;
@@ -71,13 +69,16 @@ contract SmartAccount is
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32 userOpHash,
-        address aggregatorAddress,
         uint256 missingAccountFunds
-    ) public override onlyEntryPointOrSimulation returns (uint256 deadline) {
-        deadline = super.validateUserOp(
+    )
+        public
+        override
+        onlyEntryPointOrSimulation
+        returns (uint256 validationData)
+    {
+        validationData = super.validateUserOp(
             userOp,
             userOpHash,
-            aggregatorAddress,
             missingAccountFunds
         );
     }

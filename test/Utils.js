@@ -156,9 +156,7 @@ async function generateFreePaymasterWithUOP(userOp, params) {
 
 async function paymasterSign(params, userOp) {
   if (params.sigTime == null || params.sigTime == 0) {
-    params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    );
+    params.sigTime = ethers.BigNumber.from("281474976710655");
   }
 
   const paymastersignature = await params.signer.signMessage(
@@ -246,9 +244,7 @@ async function generateSignature(
   sigType
 ) {
   if (sigTime == null || sigTime == 0) {
-    sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    );
+    sigTime = ethers.BigNumber.from("281474976710655");
   }
 
   if (sigType == null || sigType == 0) {

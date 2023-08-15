@@ -106,7 +106,7 @@ describe("SmartAccount", function () {
       let owner = await AA.getOwner();
       await expect(owner).to.equal(Alice.address);
 
-      let etryPoint = await AA.ENTRYPOINT();
+      let etryPoint = await AA.entryPoint();
       await expect(EntryPoint).to.equal(EntryPoint);
 
       let fallbackHandler = await AA.FALLBACKHANDLER();
@@ -131,21 +131,19 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
 
-      let tx = await AA.validateUserOp(
-        userOp,
-        userOpHash,
-        ethers.constants.AddressZero,
-        0
-      );
+      let tx = await AA.validateUserOp(userOp, userOpHash, 0);
       let receipt = await tx.wait();
 
       await expect(receipt.status).to.equal(1);
@@ -169,21 +167,19 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
 
-      let tx = await AA.validateUserOp(
-        userOp,
-        userOpHash,
-        ethers.constants.AddressZero,
-        0
-      );
+      let tx = await AA.validateUserOp(userOp, userOpHash, 0);
       let receipt = await tx.wait();
 
       await expect(receipt.status).to.equal(1);
@@ -207,11 +203,14 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
@@ -238,7 +237,6 @@ describe("SmartAccount", function () {
       let deadlineExtracted = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
       );
 
@@ -246,143 +244,143 @@ describe("SmartAccount", function () {
     });
   });
 
-  // describe("execute", function () {
-  //   it("should execute a transaction", async function () {
-  //     let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
+  describe("execute", function () {
+    it("should execute a transaction", async function () {
+      let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
 
-  //     // send 1 ether to AA from owner
-  //     let oneEther = ethers.utils.parseEther("1.0");
-  //     await owner.sendTransaction({
-  //       value: oneEther,
-  //       to: AA.address,
-  //     });
+      // send 1 ether to AA from owner
+      let oneEther = ethers.utils.parseEther("1.0");
+      await owner.sendTransaction({
+        value: oneEther,
+        to: AA.address,
+      });
 
-  //     let balance = await ethers.provider.getBalance(AA.address);
-  //     let balanceOfAliceBefore = await ethers.provider.getBalance(
-  //       Alice.address
-  //     );
+      let balance = await ethers.provider.getBalance(AA.address);
+      let balanceOfAliceBefore = await ethers.provider.getBalance(
+        Alice.address
+      );
 
-  //     await expect(balance).to.equal(oneEther);
+      await expect(balance).to.equal(oneEther);
 
-  //     await AA.execTransactionFromEntrypoint(Alice.address, oneEther, "0x");
+      await AA.execTransactionFromEntrypoint(Alice.address, oneEther, "0x");
 
-  //     balance = await ethers.provider.getBalance(AA.address);
-  //     let balanceOfAliceAfter = await ethers.provider.getBalance(Alice.address);
+      balance = await ethers.provider.getBalance(AA.address);
+      let balanceOfAliceAfter = await ethers.provider.getBalance(Alice.address);
 
-  //     await expect(balance).to.equal(0);
-  //     await expect(balanceOfAliceAfter.sub(balanceOfAliceBefore)).to.equal(
-  //       oneEther
-  //     );
-  //   });
+      await expect(balance).to.equal(0);
+      await expect(balanceOfAliceAfter.sub(balanceOfAliceBefore)).to.equal(
+        oneEther
+      );
+    });
 
-  //   it("should execute a transaction with callData", async function () {
-  //     let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
+    it("should execute a transaction with callData", async function () {
+      let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
 
-  //     // deploy TestToken
-  //     let TestToken = await ethers.getContractFactory("TestToken");
-  //     let testToken = await TestToken.deploy();
+      // deploy TestToken
+      let TestToken = await ethers.getContractFactory("TestToken");
+      let testToken = await TestToken.deploy();
 
-  //     // call TestToken mint(account, amount) to mint token to AA
-  //     let oneEther = ethers.utils.parseEther("1.0");
-  //     await testToken.mint(AA.address, oneEther);
+      // call TestToken mint(account, amount) to mint token to AA
+      let oneEther = ethers.utils.parseEther("1.0");
+      await testToken.mint(AA.address, oneEther);
 
-  //     // encode callData for TestToken transfer(Alice, oneEther)
-  //     let callData = testToken.interface.encodeFunctionData("transfer", [
-  //       Alice.address,
-  //       oneEther,
-  //     ]);
+      // encode callData for TestToken transfer(Alice, oneEther)
+      let callData = testToken.interface.encodeFunctionData("transfer", [
+        Alice.address,
+        oneEther,
+      ]);
 
-  //     await AA.execTransactionFromEntrypoint(testToken.address, 0, callData);
+      await AA.execTransactionFromEntrypoint(testToken.address, 0, callData);
 
-  //     let balance = await testToken.balanceOf(Alice.address);
-  //     await expect(balance).to.equal(oneEther);
-  //   });
+      let balance = await testToken.balanceOf(Alice.address);
+      await expect(balance).to.equal(oneEther);
+    });
 
-  //   it("should execute multiple transaction)", async function () {
-  //     let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
+    it("should execute multiple transaction)", async function () {
+      let { owner, SmartAccount, Alice, AA } = await loadFixture(deploy);
 
-  //     // deploy TestToken
-  //     let TestToken = await ethers.getContractFactory("TestToken");
-  //     let testToken = await TestToken.deploy();
+      // deploy TestToken
+      let TestToken = await ethers.getContractFactory("TestToken");
+      let testToken = await TestToken.deploy();
 
-  //     // call TestToken mint(account, amount) to mint token to AA
-  //     let oneEther = ethers.utils.parseEther("1.0");
-  //     await testToken.mint(AA.address, oneEther.mul(2));
+      // call TestToken mint(account, amount) to mint token to AA
+      let oneEther = ethers.utils.parseEther("1.0");
+      await testToken.mint(AA.address, oneEther.mul(2));
 
-  //     // encode callData for TestToken transfer(Alice, oneEther)
-  //     let callData = testToken.interface.encodeFunctionData("transfer", [
-  //       Alice.address,
-  //       oneEther,
-  //     ]);
+      // encode callData for TestToken transfer(Alice, oneEther)
+      let callData = testToken.interface.encodeFunctionData("transfer", [
+        Alice.address,
+        oneEther,
+      ]);
 
-  //     // encode callData for executeParams
-  //     let executeParamsNested = [
-  //       {
-  //         allowFailed: false,
-  //         to: testToken.address,
-  //         value: 0,
-  //         data: callData,
-  //         nestedCalls: "0x",
-  //       },
-  //       {
-  //         allowFailed: true,
-  //         to: testToken.address,
-  //         value: 0,
-  //         data: callData,
-  //         nestedCalls: "0x",
-  //       },
-  //     ];
+      // encode callData for executeParams
+      let executeParamsNested = [
+        {
+          allowFailed: false,
+          to: testToken.address,
+          value: 0,
+          data: callData,
+          nestedCalls: "0x",
+        },
+        {
+          allowFailed: true,
+          to: testToken.address,
+          value: 0,
+          data: callData,
+          nestedCalls: "0x",
+        },
+      ];
 
-  //     let nestedCalls = ethers.utils.defaultAbiCoder.encode(
-  //       [
-  //         {
-  //           type: "tuple[]",
-  //           name: "ExecuteParams",
-  //           components: [
-  //             { type: "bool", name: "allowFailed" },
-  //             { type: "address", name: "to" },
-  //             { type: "uint256", name: "value" },
-  //             { type: "bytes", name: "data" },
-  //             { type: "bytes", name: "nestedCalls" },
-  //           ],
-  //         },
-  //       ],
-  //       [executeParamsNested]
-  //     );
+      let nestedCalls = ethers.utils.defaultAbiCoder.encode(
+        [
+          {
+            type: "tuple[]",
+            name: "ExecuteParams",
+            components: [
+              { type: "bool", name: "allowFailed" },
+              { type: "address", name: "to" },
+              { type: "uint256", name: "value" },
+              { type: "bytes", name: "data" },
+              { type: "bytes", name: "nestedCalls" },
+            ],
+          },
+        ],
+        [executeParamsNested]
+      );
 
-  //     await AA.execTransactionFromEntrypointBatch([
-  //       {
-  //         allowFailed: false,
-  //         to: testToken.address,
-  //         value: 0,
-  //         data: callData,
-  //         nestedCalls: nestedCalls,
-  //       },
-  //     ]);
+      await AA.execTransactionFromEntrypointBatch([
+        {
+          allowFailed: false,
+          to: testToken.address,
+          value: 0,
+          data: callData,
+          nestedCalls: nestedCalls,
+        },
+      ]);
 
-  //     let balance = await testToken.balanceOf(Alice.address);
+      let balance = await testToken.balanceOf(Alice.address);
 
-  //     // 2 ether should be transferred to Alice 1 ether should be left in AA
-  //     await expect(balance).to.equal(oneEther.mul(2));
-  //   });
+      // 2 ether should be transferred to Alice 1 ether should be left in AA
+      await expect(balance).to.equal(oneEther.mul(2));
+    });
 
-  //   it("shuold upgrade proxy", async function () {
-  //     let { Alice, AA, AAProxy } = await loadFixture(deploy);
+    it("shuold upgrade proxy", async function () {
+      let { Alice, AA, AAProxy } = await loadFixture(deploy);
 
-  //     // enocde functioncall of updateImplement
-  //     let updateImplementCalldata = AA.interface.encodeFunctionData(
-  //       "updateImplement",
-  //       [ethers.constants.AddressZero]
-  //     );
+      // enocde functioncall of updateImplement
+      let updateImplementCalldata = AA.interface.encodeFunctionData(
+        "updateImplement",
+        [ethers.constants.AddressZero]
+      );
 
-  //     let tx = await AA.execTransactionFromEntrypoint(
-  //       AA.address,
-  //       0,
-  //       updateImplementCalldata
-  //     );
+      let tx = await AA.execTransactionFromEntrypoint(
+        AA.address,
+        0,
+        updateImplementCalldata
+      );
 
-  //     let newSingleton = await AAProxy.masterCopy();
-  //     await expect(newSingleton).to.equal(ethers.constants.AddressZero);
-  //   });
-  // });
+      let newSingleton = await AAProxy.masterCopy();
+      await expect(newSingleton).to.equal(ethers.constants.AddressZero);
+    });
+  });
 });

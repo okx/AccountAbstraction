@@ -12,4 +12,14 @@ contract Singleton is SelfAuthorized {
         singleton = implement;
         emit ImplementUpdated(implement);
     }
+
+    function updateImplementAndCall(
+        address implement,
+        bytes calldata data
+    ) external authorized {
+        singleton = implement;
+        emit ImplementUpdated(implement);
+        (bool success, ) = implement.delegatecall(data);
+        require(success, "Update implementation failed");
+    }
 }
