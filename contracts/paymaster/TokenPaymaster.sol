@@ -25,6 +25,8 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMin;
 
     address public immutable supportedEntryPoint;
+    address public immutable supportedUnifiedEntryPointV04;
+    address public immutable supportedUnifiedEntryPointV06;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -41,19 +43,25 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     constructor(
         address _verifyingSigner,
         address _owner,
-        address _supportedEntryPoint
+        address _supportedEntryPoint,
+        address _supportedUnifiedEntryPointV04,
+        address _supportedUnifiedEntryPointV06
     ) {
         verifyingSigner = _verifyingSigner;
         supportedEntryPoint = _supportedEntryPoint;
+        supportedUnifiedEntryPointV04 = _supportedUnifiedEntryPointV04;
+        supportedUnifiedEntryPointV06 = _supportedUnifiedEntryPointV06;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
 
     receive() external payable {}
 
-    modifier onlyEntryPoint() {
+    modifier onlyEntryPoint(address entrypoint) {
         require(
-            msg.sender == supportedEntryPoint,
+            entrypoint == supportedUnifiedEntryPointV06 ||
+            entrypoint == supportedEntryPoint ||
+            entrypoint == supportedUnifiedEntryPointV04,
             "Not from supported entrypoint"
         );
         _;
@@ -84,7 +92,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         PostOpMode,
         bytes calldata context,
         uint256 gasCost
-    ) external override onlyEntryPoint {
+    ) external override onlyEntryPoint(msg.sender) {
         (
             bytes32 userOpHash,
             address sender,
@@ -238,19 +246,21 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     }
 
     function withdrawDepositNativeToken(
+        address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) {
-        IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
+    ) public onlyOwner onlyWhitelisted(withdrawAddress) onlyEntryPoint(entryPoint) {
+        IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
 
     // ERC20 only
     function swapToNative(
+        address entryPoint,
         IERC20 token,
         uint256 amount,
         uint256 minAmountOut
-    ) external onlyOwner {
+    ) external onlyOwner onlyEntryPoint(entryPoint) {
         address nativeAddress = ISwapAdapter(payable(swapAdapter))
             .nativeToken();
 
@@ -278,7 +288,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             "TokenPaymaster: insufficient amountOut"
         );
 
-        IEntryPoint(supportedEntryPoint).depositTo{
+        IEntryPoint(entryPoint).depositTo{
             value: address(this).balance
         }(address(this));
 

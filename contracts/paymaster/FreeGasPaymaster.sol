@@ -19,18 +19,36 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     address public immutable verifyingSigner;
     address public immutable ADDRESS_THIS;
     address public immutable supportedEntryPoint;
+    address public immutable supportedUnifiedEntryPointV04;
+    address public immutable supportedUnifiedEntryPointV06;
     mapping(address => bool) public whitelist;
 
     constructor(
         address _verifyingSigner,
         address _owner,
-        address _supportedEntryPoint
+        address _supportedEntryPoint,
+        address _supportedUnifiedEntryPointV04,
+        address _supportedUnifiedEntryPointV06
+
     ) {
         verifyingSigner = _verifyingSigner;
         _transferOwnership(_owner);
         supportedEntryPoint = _supportedEntryPoint;
+        supportedUnifiedEntryPointV04 = _supportedUnifiedEntryPointV04;
+        supportedUnifiedEntryPointV06 = _supportedUnifiedEntryPointV06;
         ADDRESS_THIS = address(this);
     }
+
+    modifier onlyEntryPoint(address entrypoint) {
+        require(
+            entrypoint == supportedUnifiedEntryPointV06 ||
+            entrypoint == supportedEntryPoint ||
+            entrypoint == supportedUnifiedEntryPointV04,
+            "Not from supported entrypoint"
+        );
+        _;
+    }
+
 
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
@@ -63,9 +81,10 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     }
 
     function withdrawDepositNativeToken(
+        address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) {
+    ) public onlyOwner onlyWhitelisted(withdrawAddress) onlyEntryPoint(entryPoint) {
         IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
