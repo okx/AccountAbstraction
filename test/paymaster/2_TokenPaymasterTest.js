@@ -7,9 +7,35 @@ describe("TokenPaymaster", function () {
     let [owner, signer, alice, entryPoint] = await ethers.getSigners();
 
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
-    let entryPointContract = await MockEntryPointL1.deploy(owner.address);
+    let EntryPointV06 = await ethers.getContractFactory(
+      "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+    );
+    let entryPointContractSimulate = await MockEntryPointL1.deploy(owner.address);
     let entryPointContractV04 = await MockEntryPointL1.deploy(owner.address);
-    let entryPointContractV06 = await MockEntryPointL1.deploy(owner.address);
+    let entryPointContractV06 = await EntryPointV06.deploy();
+
+     
+    /// change version to switch entrypoint
+    let version = 2;
+    let entryPointContract;
+
+    switch (version) {
+    case 0 :
+      /// if test entryPointSimulate;
+      entryPointContract = entryPointContractSimulate;
+      break;
+    case 1 : 
+      /// if test entryPointV04
+      entryPointContract = entryPointContractV04;
+      break;
+    case 2 : 
+      /// if test entryPointV06 
+      entryPointContract = entryPointContractV06;
+      break;
+    default:
+      entryPointContract = entryPointContractV06; 
+    }
+
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
       "MockChainlinkOracle",
     );
@@ -75,7 +101,7 @@ describe("TokenPaymaster", function () {
     let tokenPaymasterWithEntryPoint = await TokenPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPointContract.address,
+      entryPointContractSimulate.address,
       entryPointContractV04.address,
       entryPointContractV06.address,
     );
@@ -96,8 +122,6 @@ describe("TokenPaymaster", function () {
       userOpHelper,
       entryPointContract,
       tokenPaymasterWithEntryPoint,
-      entryPointContractV04,
-      entryPointContractV06,
     };
   }
   describe("constructor", function () {

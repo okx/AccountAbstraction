@@ -11,17 +11,67 @@ describe("FreeGasPaymaster", function () {
       "FreeGasPaymaster"
     );
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
-    let entryPoint = await MockEntryPointL1.deploy(owner.address);
+
+    let EntryPointV06 = await ethers.getContractFactory(
+      "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+    );
+
+    let entryPointSimulate = await MockEntryPointL1.deploy(owner.address);
     let entryPointV04 = await MockEntryPointL1.deploy(owner.address);
-    let entryPointV06 = await MockEntryPointL1.deploy(owner.address);
+    let entryPointV06 = await EntryPointV06.deploy();
 
     let freeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
       owner.address,
-      entryPoint.address,
+      entryPointSimulate.address,
       entryPointV04.address,
       entryPointV06.address,
     );
+
+
+    // enum entryPointVersion {
+    //     simulate,
+    //     v04,
+    //     v06
+    // }
+    // let version = entryPointVersion.v06;
+    // let entryPoint;
+
+    // switch version {
+    // case entryPointVersion.simulate :
+    //   /// if test entryPointSimulate;
+    //   entryPoint = entryPointSimulate;
+    // case entryPointVersion.v04 : 
+    //   /// if test entryPointV04
+    //   entryPoint = entryPointV04;
+    // case entryPointVersion.v06 : 
+    //   /// if test entryPointV06 
+    //   entryPoint = entryPointV06;
+    // default:
+    //   entryPoint = entryPointV06; 
+    // }
+
+    
+    /// change version to switch entrypoint
+    let version = 2;
+    let entryPoint;
+
+    switch (version) {
+    case 0 :
+      /// if test entryPointSimulate;
+      entryPoint = entryPointSimulate;
+      break;
+    case 1 : 
+      /// if test entryPointV04
+      entryPoint = entryPointV04;
+      break;
+    case 2 : 
+      /// if test entryPointV06 
+      entryPoint = entryPointV06;
+      break;
+    default:
+      entryPoint = entryPointV06; 
+    }
 
     let TestToken = await ethers.getContractFactory("TestToken");
     let testToken = await TestToken.deploy();
@@ -33,14 +83,13 @@ describe("FreeGasPaymaster", function () {
       freeGasPaymaster,
       entryPoint,
       testToken,
-      entryPointV04,
-      entryPointV06
+      version
     };
   }
 
   describe("constructor", function () {
     it("should read default value correctly", async function () {
-      const { owner, signer, freeGasPaymaster, entryPoint } = await loadFixture(
+      const { owner, signer, freeGasPaymaster, entryPoint, version } = await loadFixture(
         deploy
       );
 
@@ -50,8 +99,18 @@ describe("FreeGasPaymaster", function () {
       let defaultOwner = await freeGasPaymaster.owner();
       await expect(defaultOwner).to.equal(owner.address);
 
-      let defaultEntryPoint = await freeGasPaymaster.supportedSimulateEntryPoint();
+
+      /// test different version entrypoint 
+      let defaultEntryPoint;
+      if (version == 0) {
+        defaultEntryPoint = await freeGasPaymaster.supportedSimulateEntryPoint();
+      } else if (version == 1) {
+        defaultEntryPoint = await freeGasPaymaster.supportedEntryPointV04();
+      } else {
+        defaultEntryPoint = await freeGasPaymaster.supportedEntryPointV06();
+      }
       await expect(defaultEntryPoint).to.equal(entryPoint.address);
+     
     });
 
     // it("should emit an event on", async function () {
