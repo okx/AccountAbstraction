@@ -6,8 +6,29 @@ describe("OKCSwapAdapter", function () {
     async function deploy() {
         let [owner, signer] = await ethers.getSigners();
 
-        let EntryPointFactory = await ethers.getContractFactory("MockEntryPointL1");
-        let EntryPoint = await EntryPointFactory.deploy(owner.address);
+        let EntryPoin04Factory = await ethers.getContractFactory("MockEntryPointL1");
+        let EntryPoin06Factory = await ethers.getContractFactory(
+            "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+          );
+        let EntryPointV04 = await EntryPoin04Factory.deploy(owner.address);
+        let EntryPointV06 = await EntryPoin06Factory.deploy();        
+
+         /// change version to switch entrypoint
+        let version = 2;
+        let EntryPoint;
+
+        switch (version) {
+        case 1 : 
+        /// if test entryPointV04
+        EntryPoint = EntryPointV04;
+        break;
+        case 2 : 
+        /// if test entryPointV06 
+        EntryPoint = EntryPointV06;
+        break;
+        default:
+        EntryPoint = EntryPointV06; 
+        }
 
         let MockChainlinkOracleFactory = await ethers.getContractFactory(
             "MockChainlinkOracle"
@@ -59,9 +80,9 @@ describe("OKCSwapAdapter", function () {
         let TokenPaymaster = await TokenPaymasterFactory.deploy(
             signer.address,
             owner.address,
-            EntryPoint.address,
-            EntryPoint.address,
-            EntryPoint.address
+            EntryPointV04.address,
+            EntryPointV04.address,
+            EntryPointV06.address
         );
 
         await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
