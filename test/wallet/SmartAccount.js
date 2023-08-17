@@ -61,7 +61,7 @@ describe("SmartAccount", function () {
     let AAProxy = await SmartAccountProxy.attach(AA.address);
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper"
+      "contracts/helper/UserOperationHelper.sol:UserOperationHelper"
     );
     let UserOpHelper = await UserOpHelperFactory.deploy(
       ethers.constants.AddressZero,

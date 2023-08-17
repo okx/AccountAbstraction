@@ -63,7 +63,7 @@ describe("SmartAccount", function () {
     );
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper"
+      "contracts/helper/UserOperationHelper.sol:UserOperationHelper"
     );
     let userOpHelper = await UserOpHelperFactory.deploy(
       ethers.constants.AddressZero,

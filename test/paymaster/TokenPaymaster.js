@@ -70,7 +70,7 @@ describe("TokenPaymaster", function () {
     );
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper",
+      "contracts/helper/UserOperationHelper.sol:UserOperationHelper"
     );
     let UserOpHelper = await UserOpHelperFactory.deploy(
       TokenPaymaster.address,

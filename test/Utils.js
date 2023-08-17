@@ -378,10 +378,66 @@ async function deploy(owner, DeployFactory, SmartAccount, salt) {
   );
 }
 
+
+async function generateUOPWithManualGasLimit(
+  sender,
+  nonce,
+  initCode,
+  callData,
+  paymasterAndData,
+  manualVerificationGasLimit,
+  manualPreVerificationGas,
+  manualCallGasLimit
+) {
+
+  let userOp = {
+    sender: sender,
+    nonce: nonce,
+    initCode: initCode,
+    callData: callData,
+    callGasLimit: manualCallGasLimit !== null ? manualCallGasLimit : callGasLimit,
+    verificationGasLimit: manualVerificationGasLimit !== null ? manualVerificationGasLimit : verificationGasLimit,
+    preVerificationGas: manualPreVerificationGas !== null ? manualPreVerificationGas : preVerificationGas,
+    maxFeePerGas: maxFeePerGas,
+    maxPriorityFeePerGas: maxPriorityFeePerGas,
+    paymasterAndData: paymasterAndData,
+    signature: "0x",
+  };
+
+  return userOp;
+}
+
+async function generateSignedUOPWithManualGasLimit(params) {
+  let userOp = await generateUOPWithManualGasLimit(
+    params.sender,
+    params.nonce,
+    params.initCode,
+    params.callData,
+    params.paymasterAndData,
+    params.manualVerificationGasLimit,
+    params.manualPreVerificationGas,
+    params.manualCallGasLimit
+  );
+
+  userOp.signature = await generateSignature(
+    params.owner,
+    params.SmartAccount,
+    params.EntryPoint,
+    userOp,
+    params.sigTime,
+    params.sigType
+  );
+
+  return userOp;
+}
+
+
+
 module.exports = {
   generateAccount,
   generateUOP,
   generateSignedUOP,
+  generateSignedUOPWithManualGasLimit,
   generateNUOP,
   generateNSignedUOP,
   generateFreePaymasterUOP,

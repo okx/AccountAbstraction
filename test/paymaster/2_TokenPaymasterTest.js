@@ -14,26 +14,26 @@ describe("TokenPaymaster", function () {
     let entryPointContractV04 = await MockEntryPointL1.deploy(owner.address);
     let entryPointContractV06 = await EntryPointV06.deploy();
 
-     
+
     /// change version to switch entrypoint
     let version = 2;
     let entryPointContract;
 
     switch (version) {
-    case 0 :
-      /// if test entryPointSimulate;
-      entryPointContract = entryPointContractSimulate;
-      break;
-    case 1 : 
-      /// if test entryPointV04
-      entryPointContract = entryPointContractV04;
-      break;
-    case 2 : 
-      /// if test entryPointV06 
-      entryPointContract = entryPointContractV06;
-      break;
-    default:
-      entryPointContract = entryPointContractV06; 
+      case 0:
+        /// if test entryPointSimulate;
+        entryPointContract = entryPointContractSimulate;
+        break;
+      case 1:
+        /// if test entryPointV04
+        entryPointContract = entryPointContractV04;
+        break;
+      case 2:
+        /// if test entryPointV06 
+        entryPointContract = entryPointContractV06;
+        break;
+      default:
+        entryPointContract = entryPointContractV06;
     }
 
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
@@ -90,7 +90,7 @@ describe("TokenPaymaster", function () {
       .setDecimals(await priceOracle.NATIVE_TOKEN(), 18);
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper",
+      "contracts/helper/UserOperationHelper.sol:UserOperationHelper"
     );
     let userOpHelper = await UserOpHelperFactory.deploy(
       tokenPaymaster.address,
