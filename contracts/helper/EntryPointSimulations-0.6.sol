@@ -230,7 +230,7 @@ contract EntryPointSimulations is
     }
 
     function syncNonce(address target, uint256 nonce) internal {
-        nonceSequenceNumber[target][uint192(nonce >> 64)] = getNonce(
+        nonceSequenceNumber[target][uint192(nonce >> 64)] = ENTRYPOINT.getNonce(
             target,
             uint192(nonce >> 64)
         );
