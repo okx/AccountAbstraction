@@ -172,38 +172,33 @@ contract SignatureManager is
             }("");
         }
 
-        uint256 deadline = uint256(bytes32(userOp.signature[1:33]));
-        if (deadline > type(uint48).max) {
-            return SIG_VALIDATION_FAILED;
-        }
-
-        if (
-            ECDSA.recover(
+        return
+            _validateSignature(
+                userOp,
                 getUOPSignedHash(
                     SignatureType(uint8(bytes1(userOp.signature[0:1]))),
                     msg.sender,
                     userOp
-                ),
-                userOp.signature[33:]
-            ) != owner
-        ) {
-            return SIG_VALIDATION_FAILED;
-        } else {
-            return
-                _packValidationData(
-                    ValidationData(address(0), 0, uint48(deadline))
-                );
-        }
+                )
+            );
     }
 
     function _validateSignature(
         UserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
+        uint256 deadline = uint256(bytes32(userOp.signature[1:33]));
+        if (deadline > type(uint48).max) {
+            return SIG_VALIDATION_FAILED;
+        }
+
         if (ECDSA.recover(userOpHash, userOp.signature[33:]) != owner) {
             return SIG_VALIDATION_FAILED;
         } else {
-            return uint256(bytes32(userOp.signature[1:33]));
+            return
+                _packValidationData(
+                    ValidationData(address(0), 0, uint48(deadline))
+                );
         }
     }
 
