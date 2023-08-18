@@ -58,6 +58,11 @@ describe("SmartAccount", function () {
         let MockEntryPointSimulationFactory0_6 = await ethers.getContractFactory("MockEntryPointSimulations");
         let mockEntryPointSimulation0_6 = await MockEntryPointSimulationFactory0_6.deploy(entrypoint0_6.address);
 
+
+        let EntryPointSimulationFactory0_6 = await ethers.getContractFactory("contracts/helper/EntryPointSimulations-0.6.sol:EntryPointSimulations");
+        let entryPointSimulation0_6 = await EntryPointSimulationFactory0_6.deploy(entrypoint0_6.address);
+
+
         // deploy storage
         let Storage = await ethers.getContractFactory("Storage");
         let storage = await Storage.deploy();
@@ -74,7 +79,7 @@ describe("SmartAccount", function () {
         );
         let smartAccount0_6 = await SmartAccount0_6.deploy(
             entrypoint0_6.address,
-            mockEntryPointSimulation0_6.address,
+            entryPointSimulation0_6.address,
             defaultCallbackHandler0_6.address,
             storage.address,
             "SA",
@@ -115,7 +120,7 @@ describe("SmartAccount", function () {
         let TokenPaymaster = await TokenPaymasterFactory.deploy(
             signer.address,
             owner.address,
-            mockEntryPointSimulation0_6.address,
+            entryPointSimulation0_6.address,
             entrypoint0_4.address,
             entrypoint0_6.address
         );
@@ -140,6 +145,7 @@ describe("SmartAccount", function () {
             entrypoint0_6,
             smartAccount0_4,
             smartAccount0_6,
+            entryPointSimulation0_6,
             mockEntryPointSimulation0_6,
             smartAccountProxyFactory,
             TestToken,
@@ -289,7 +295,7 @@ describe("SmartAccount", function () {
                 smartAccount0_4,
                 smartAccount0_6,
                 smartAccountProxyFactory,
-                mockEntryPointSimulation0_6,
+                entryPointSimulation0_6,
                 TestToken
             } = await loadFixture(deploy);
 
@@ -356,13 +362,13 @@ describe("SmartAccount", function () {
             });
 
             const callDetails = {
-                to: mockEntryPointSimulation0_6.address,
-                data: mockEntryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
+                to: entryPointSimulation0_6.address,
+                data: entryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
                 )
             };
 
 
-            const parsedError = mockEntryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
+            const parsedError = entryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
 
             const expectRevertReason = "ERC20: transfer amount exceeds balance";
             const bytes = ethers.utils.toUtf8Bytes(expectRevertReason);
@@ -383,7 +389,7 @@ describe("SmartAccount", function () {
                 smartAccount0_4,
                 smartAccount0_6,
                 smartAccountProxyFactory,
-                mockEntryPointSimulation0_6
+                entryPointSimulation0_6
             } = await loadFixture(deploy);
 
             let initializeData = smartAccount0_4.interface.encodeFunctionData(
@@ -443,13 +449,13 @@ describe("SmartAccount", function () {
             });
 
             let callDetails = {
-                to: mockEntryPointSimulation0_6.address,
-                data: mockEntryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
+                to: entryPointSimulation0_6.address,
+                data: entryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
                 )
             };
 
 
-            let parsedError = mockEntryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
+            let parsedError = entryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
 
             await expect(parsedError.args[1]).to.equal(0);
 
@@ -472,12 +478,12 @@ describe("SmartAccount", function () {
             });
 
             callDetails = {
-                to: mockEntryPointSimulation0_6.address,
-                data: mockEntryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
+                to: entryPointSimulation0_6.address,
+                data: entryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
                 )
             };
 
-            parsedError = mockEntryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
+            parsedError = entryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
 
             await expect(parsedError.args[1]).to.equal(1);
         });
@@ -491,7 +497,7 @@ describe("SmartAccount", function () {
                 smartAccount0_4,
                 smartAccount0_6,
                 smartAccountProxyFactory,
-                mockEntryPointSimulation0_6
+                entryPointSimulation0_6
             } = await loadFixture(deploy);
 
             let initializeData = smartAccount0_4.interface.encodeFunctionData(
@@ -550,13 +556,13 @@ describe("SmartAccount", function () {
             });
 
             const callDetails = {
-                to: mockEntryPointSimulation0_6.address,
-                data: mockEntryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
+                to: entryPointSimulation0_6.address,
+                data: entryPointSimulation0_6.interface.encodeFunctionData("simulateHandleOp", [userOp, ethers.constants.AddressZero, "0x"]
                 )
             };
 
 
-            const parsedError = mockEntryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
+            const parsedError = entryPointSimulation0_6.interface.parseError(await bundler.call(callDetails));
 
             k = 1.5
 
