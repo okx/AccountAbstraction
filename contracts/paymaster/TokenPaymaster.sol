@@ -57,7 +57,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
 
     receive() external payable {}
 
-    modifier onlyEntryPoint(address entrypoint) {
+    modifier validEntryPoint(address entrypoint) {
         require(
             entrypoint == supportedEntryPointV06 ||
                 entrypoint == supportedSimulateEntryPoint ||
@@ -92,7 +92,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         PostOpMode,
         bytes calldata context,
         uint256 gasCost
-    ) external override onlyEntryPoint(msg.sender) {
+    ) external override validEntryPoint(msg.sender) {
         (
             bytes32 userOpHash,
             address sender,
@@ -253,7 +253,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         public
         onlyOwner
         onlyWhitelisted(withdrawAddress)
-        onlyEntryPoint(entryPoint)
+        validEntryPoint(entryPoint)
     {
         IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
@@ -265,7 +265,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         IERC20 token,
         uint256 amount,
         uint256 minAmountOut
-    ) external onlyOwner onlyEntryPoint(entryPoint) {
+    ) external onlyOwner validEntryPoint(entryPoint) {
         address nativeAddress = ISwapAdapter(payable(swapAdapter))
             .nativeToken();
 
