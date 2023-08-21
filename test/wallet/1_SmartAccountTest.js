@@ -16,7 +16,7 @@ describe("SmartAccount", function () {
     let defaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
     let Validations = await ethers.getContractFactory("Validations");
-    let validations = await Validations.deploy();
+    let validations = await Validations.deploy(owner.address);
 
     await validations.setBundlerOfficialWhitelist(owner.address, true);
 

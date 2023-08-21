@@ -6,7 +6,7 @@ import {EntryPoint as EntryPoint0_4} from "../@eth-infinitism-v0.4/core/EntryPoi
 import "./Validations.sol";
 
 contract EntryPointLogic is IEntryPointLogic, EntryPoint0_4, Validations {
-    constructor(address owner) {
+    constructor(address owner) Validations(owner) {
         _transferOwnership(owner);
     }
 

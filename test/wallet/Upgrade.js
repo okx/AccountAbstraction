@@ -57,7 +57,7 @@ describe("SmartAccount", function () {
 
     // deploy validations
     let Validations = await ethers.getContractFactory("Validations");
-    let validations = await Validations.deploy();
+    let validations = await Validations.deploy(owner.address);
     await validations.setBundlerOfficialWhitelist(bundler.address, true);
 
     // deploy smartAccount-0.6

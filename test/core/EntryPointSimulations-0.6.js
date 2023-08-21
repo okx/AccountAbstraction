@@ -2,7 +2,7 @@ let { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 let { expect } = require("chai");
 let Utils = require("../Utils.js");
 
-describe("SmartAccount", function () {
+describe("EntryPointSimulations-0.6", function () {
   async function deploy() {
     let [owner, bundler, alice, signer] = await ethers.getSigners();
 
@@ -67,7 +67,7 @@ describe("SmartAccount", function () {
 
     // deploy storage
     let Validations = await ethers.getContractFactory("Validations");
-    let validations = await Validations.deploy();
+    let validations = await Validations.deploy(owner.address);
     await validations.setBundlerOfficialWhitelist(bundler.address, true);
 
     // deploy smartAccount-0.6

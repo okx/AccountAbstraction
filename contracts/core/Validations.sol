@@ -15,6 +15,10 @@ contract Validations is Ownable, IValidations {
     mapping(address => bool) public officialBundlerWhiteList;
     mapping(address => bool) public moduleWhiteList;
 
+    constructor(address _owner) {
+        _transferOwnership(_owner);
+    }
+
     function setUnrestrictedWallet(bool allowed) public onlyOwner {
         unrestrictedWallet = allowed;
         emit UnrestrictedWalletSet(allowed);
@@ -28,6 +32,19 @@ contract Validations is Ownable, IValidations {
     function setUnrestrictedModule(bool allowed) public onlyOwner {
         unrestrictedModule = allowed;
         emit UnrestrictedModuleSet(allowed);
+    }
+
+    function setBundlerOfficialWhitelistBatch(
+        address[] memory bundler,
+        bool[] memory allowed
+    ) public onlyOwner {
+        uint256 length = bundler.length;
+        require(length == allowed.length, "incorrect arrary length");
+
+        for (uint i = 0; i < length; i++) {
+            officialBundlerWhiteList[bundler[i]] = allowed[i];
+            emit BundlerWhitelistSet(bundler[i], allowed[i]);
+        }
     }
 
     function setBundlerOfficialWhitelist(

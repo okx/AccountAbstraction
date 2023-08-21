@@ -16,7 +16,7 @@ describe("SmartAccountProxyFactory", function () {
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
     let Validations = await ethers.getContractFactory("Validations");
-    let validations = await Validations.deploy();
+    let validations = await Validations.deploy(owner.address);
 
     await validations.setBundlerOfficialWhitelist(owner.address, true);
 
