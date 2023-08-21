@@ -15,10 +15,10 @@ describe("SmartAccountProxyFactory", function () {
     );
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let StorageFactory = await ethers.getContractFactory("Storage");
-    let storage = await StorageFactory.deploy();
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy();
 
-    await storage.setBundlerOfficialWhitelist(owner.address, true);
+    await validations.setBundlerOfficialWhitelist(owner.address, true);
 
     let SmartAccountFactory = await ethers.getContractFactory(
       "contracts/wallet/SmartAccount.sol:SmartAccount"
@@ -27,7 +27,7 @@ describe("SmartAccountProxyFactory", function () {
       EntryPoint,
       SimulationContract,
       DefaultCallbackHandler.address,
-      storage.address,
+      validations.address,
       "SA",
       "1.0"
     );

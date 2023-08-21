@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-interface IStorage {
+interface IValidations {
     struct bundlerInformation {
         address bundler;
         uint256 registeTime;

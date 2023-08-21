@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IStorage.sol";
+import "../interfaces/IValidations.sol";
 import "../interfaces/ISmartAccountProxy.sol";
 import "../interfaces/ISmartAccountProxyFactory.sol";
 
-contract Storage is Ownable, IStorage {
+contract Validations is Ownable, IValidations {
     bool public unrestrictedWallet;
     bool public unrestrictedBundler;
     bool public unrestrictedModule;

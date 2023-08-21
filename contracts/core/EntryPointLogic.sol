@@ -3,9 +3,9 @@ pragma solidity ^0.8.12;
 
 import "../interfaces/IEntryPointLogic.sol";
 import {EntryPoint as EntryPoint0_4} from "../@eth-infinitism-v0.4/core/EntryPoint.sol";
-import "./Storage.sol";
+import "./Validations.sol";
 
-contract EntryPointLogic is IEntryPointLogic, EntryPoint0_4, Storage {
+contract EntryPointLogic is IEntryPointLogic, EntryPoint0_4, Validations {
     constructor(address owner) {
         _transferOwnership(owner);
     }

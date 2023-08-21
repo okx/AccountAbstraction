@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../interfaces/IStorage.sol";
+import "../interfaces/IValidations.sol";
 import "./base/SignatureManager.sol";
 import "./base/ModuleManager.sol";
 import "./base/OwnerManager.sol";
@@ -102,7 +102,7 @@ contract SmartAccount is
         bytes calldata data,
         Enum.Operation operation
     ) public override {
-        IStorage(EntryPoint).validateModuleWhitelist(msg.sender);
+        IValidations(EntryPoint).validateModuleWhitelist(msg.sender);
 
         if (operation == Enum.Operation.Call) {
             ModuleManager.execTransactionFromModule(to, value, data, operation);

@@ -55,10 +55,10 @@ describe("SmartAccount", function () {
 
     let simulationContract = owner.address;
 
-    // deploy storage
-    let Storage = await ethers.getContractFactory("Storage");
-    let storage = await Storage.deploy();
-    await storage.setBundlerOfficialWhitelist(bundler.address, true);
+    // deploy validations
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy();
+    await validations.setBundlerOfficialWhitelist(bundler.address, true);
 
     // deploy smartAccount-0.6
     let DefaultCallbackHandlerFactory0_6 = await ethers.getContractFactory(
@@ -73,7 +73,7 @@ describe("SmartAccount", function () {
       entrypoint0_6.address,
       simulationContract,
       defaultCallbackHandler0_6.address,
-      storage.address,
+      validations.address,
       "SA",
       "1.0"
     );

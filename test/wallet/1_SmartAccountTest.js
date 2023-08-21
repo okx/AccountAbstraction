@@ -15,10 +15,10 @@ describe("SmartAccount", function () {
     );
     let defaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let StorageFactory = await ethers.getContractFactory("Storage");
-    let storage = await StorageFactory.deploy();
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy();
 
-    await storage.setBundlerOfficialWhitelist(owner.address, true);
+    await validations.setBundlerOfficialWhitelist(owner.address, true);
 
     let SmartAccount = await ethers.getContractFactory(
       "contracts/wallet/SmartAccount.sol:SmartAccount"
@@ -27,7 +27,7 @@ describe("SmartAccount", function () {
       EntryPoint,
       SimulationContract,
       defaultCallbackHandler.address,
-      storage.address,
+      validations.address,
       "SA",
       "1.0"
     );
@@ -75,7 +75,7 @@ describe("SmartAccount", function () {
       owner,
       bundler,
       EntryPoint,
-      storage,
+      validations,
       smartAccount,
       userOpHelper,
       defaultCallbackHandler,
@@ -183,11 +183,11 @@ describe("SmartAccount", function () {
 
   describe("execute", function () {
     it("should revert if a not bundler call", async function () {
-      let { owner, smartAccount, storage, alice, AA } = await loadFixture(
+      let { owner, smartAccount, validations, alice, AA } = await loadFixture(
         deploy
       );
 
-      await storage.setBundlerOfficialWhitelist(owner.address, false);
+      await validations.setBundlerOfficialWhitelist(owner.address, false);
 
       // send 1 ether to AA from owner
       let oneEther = ethers.utils.parseEther("1.0");
@@ -202,11 +202,11 @@ describe("SmartAccount", function () {
     });
 
     it("should revert if not from entrypoint", async function () {
-      let { owner, bundler, smartAccount, storage, alice, AA } =
+      let { owner, bundler, smartAccount, validations, alice, AA } =
         await loadFixture(deploy);
 
-      await storage.setBundlerOfficialWhitelist(owner.address, false);
-      await storage.setBundlerOfficialWhitelist(bundler.address, true);
+      await validations.setBundlerOfficialWhitelist(owner.address, false);
+      await validations.setBundlerOfficialWhitelist(bundler.address, true);
 
       // send 1 ether to AA from owner
       let oneEther = ethers.utils.parseEther("1.0");
@@ -692,7 +692,7 @@ describe("SmartAccount", function () {
 
   describe("execTransactionFromModule", function () {
     it("should execute a transaction with module", async function () {
-      let { owner, smartAccount, alice, AA, storage } = await loadFixture(
+      let { owner, smartAccount, alice, AA, validations } = await loadFixture(
         deploy
       );
 
@@ -712,7 +712,7 @@ describe("SmartAccount", function () {
 
       let MockModule = await ethers.getContractFactory("MockModule");
       let mockModule = await MockModule.deploy(AA.address);
-      await storage.setModuleWhitelist(mockModule.address, true);
+      await validations.setModuleWhitelist(mockModule.address, true);
 
       // encode callData for  setGuard(mockGuard)
       let moduleCallData = smartAccount.interface.encodeFunctionData(
@@ -729,7 +729,7 @@ describe("SmartAccount", function () {
     });
 
     it("should setFallbackHandler with module", async function () {
-      let { owner, smartAccount, storage, alice, AA } = await loadFixture(
+      let { owner, smartAccount, validations, alice, AA } = await loadFixture(
         deploy
       );
 
@@ -749,7 +749,7 @@ describe("SmartAccount", function () {
       ]);
 
       let mockModule = await MockModule.deploy(AA.address);
-      await storage.setModuleWhitelist(mockModule.address, true);
+      await validations.setModuleWhitelist(mockModule.address, true);
       await testToken.mint(AA.address, oneEther.mul(2));
       let res = await testToken.balanceOf(AA.address);
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../interfaces/IStorage.sol";
+import "../interfaces/IValidations.sol";
 import "../wallet-0.4/base/SignatureManager.sol";
 import "../wallet-0.4/base/ModuleManager.sol";
 import "../wallet-0.4/base/OwnerManager.sol";
@@ -104,7 +104,7 @@ contract MockWrongSmartAccount is
         bytes calldata data,
         Enum.Operation operation
     ) public override {
-        IStorage(EntryPoint).validateModuleWhitelist(msg.sender);
+        IValidations(EntryPoint).validateModuleWhitelist(msg.sender);
 
         if (operation == Enum.Operation.Call) {
             ModuleManager.execTransactionFromModule(to, value, data, operation);

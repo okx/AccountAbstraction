@@ -2,7 +2,7 @@
 pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IStorage.sol";
+import "../interfaces/IValidations.sol";
 import "../@eth-infinitism-v0.4/interfaces/IStakeManager.sol";
 
 contract BundlerDepositHelper is Ownable {
@@ -40,7 +40,7 @@ contract BundlerDepositHelper is Ownable {
             uint256 amount = amounts[i];
 
             require(
-                IStorage(entryPoint).officialBundlerWhiteList(bundler),
+                IValidations(entryPoint).officialBundlerWhiteList(bundler),
                 "BundlerDepositHelper: Invalid bundler"
             );
 

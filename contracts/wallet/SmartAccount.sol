@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../interfaces/IStorage.sol";
+import "../interfaces/IValidations.sol";
 import "./base/SignatureManager.sol";
 import "./base/ModuleManager.sol";
 import "./base/OwnerManager.sol";
@@ -23,7 +23,7 @@ contract SmartAccount is
     GuardManager,
     SignatureManager
 {
-    IStorage public immutable STORAGE;
+    IValidations public immutable VALIDATIONS;
 
     address public immutable SIMULATION;
     address public immutable FALLBACKHANDLER;
@@ -32,13 +32,13 @@ contract SmartAccount is
         address _entryPoint,
         address _simulation,
         address _fallbackHandler,
-        address _storage,
+        address _validations,
         string memory _name,
         string memory _version
     ) SignatureManager(_entryPoint, _name, _version) {
         SIMULATION = _simulation;
         FALLBACKHANDLER = _fallbackHandler;
-        STORAGE = IStorage(_storage);
+        VALIDATIONS = IValidations(_validations);
     }
 
     modifier onlyEntryPointOrSimulation() {
@@ -50,12 +50,12 @@ contract SmartAccount is
     }
 
     modifier onlyWhiteListedBundler() {
-        STORAGE.validateBundlerWhiteList(tx.origin);
+        VALIDATIONS.validateBundlerWhiteList(tx.origin);
         _;
     }
 
     modifier onlyWhiteListedModule() {
-        STORAGE.validateModuleWhitelist(msg.sender);
+        VALIDATIONS.validateModuleWhitelist(msg.sender);
         _;
     }
 
