@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "../@eth-infinitism-v0.4/interfaces/IPaymaster.sol";
+import "../@eth-infinitism-v0.6/interfaces/IPaymaster.sol";
 
 interface ITokenPaymaster is IPaymaster {
     event TokenPriceLimitMaxSet(address indexed token, uint256 price);

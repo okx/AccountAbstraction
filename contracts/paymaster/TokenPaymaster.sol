@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ITokenPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
-import "../@eth-infinitism-v0.4/interfaces/IEntryPoint.sol";
+import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
 import "../interfaces/ISwapAdapter.sol";
 
 contract TokenPaymaster is ITokenPaymaster, Ownable {
@@ -194,7 +194,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 requiredPreFund
-    ) external view override returns (bytes memory, uint256) {
+    ) external view returns (bytes memory, uint256) {
         address token = address(bytes20(userOp.paymasterAndData[20:40]));
         uint256 exchangeRate = uint256(bytes32(userOp.paymasterAndData[40:72]));
         uint256 sigTime = uint256(bytes32(userOp.paymasterAndData[72:104]));
