@@ -79,13 +79,11 @@ describe("OKCSwapAdapter", function () {
         );
         let TokenPaymaster = await TokenPaymasterFactory.deploy(
             signer.address,
-            owner.address,
-            EntryPointV04.address,
-            EntryPointV04.address,
-            EntryPointV06.address
+            owner.address
         );
 
         await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
+        await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
         let MockOKCSwapRouterFactory = await ethers.getContractFactory(
             "contracts/mock/MockOKCSwap.sol:MockOKCSwapRouter"

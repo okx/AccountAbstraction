@@ -10,9 +10,11 @@ import "../interfaces/ITokenPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
 import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
 import "../interfaces/ISwapAdapter.sol";
+import "./SupportedEntryPointLib.sol";
 
 contract TokenPaymaster is ITokenPaymaster, Ownable {
     using UserOperationLib for UserOperation;
+    using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -24,9 +26,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMax;
     mapping(address => uint256) public tokenPriceLimitMin;
 
-    address public immutable supportedSimulateEntryPoint;
-    address public immutable supportedEntryPointV04;
-    address public immutable supportedEntryPointV06;
+    SupportedEntryPoint supportedEntryPoint;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -40,17 +40,8 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         uint sigTime;
     }
 
-    constructor(
-        address _verifyingSigner,
-        address _owner,
-        address _supportedSimulateEntryPoint,
-        address _supportedEntryPointV04,
-        address _supportedEntryPointV06
-    ) {
+    constructor(address _verifyingSigner, address _owner) {
         verifyingSigner = _verifyingSigner;
-        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
-        supportedEntryPointV04 = _supportedEntryPointV04;
-        supportedEntryPointV06 = _supportedEntryPointV06;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
@@ -59,9 +50,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
 
     modifier validEntryPoint(address entrypoint) {
         require(
-            entrypoint == supportedEntryPointV06 ||
-                entrypoint == supportedSimulateEntryPoint ||
-                entrypoint == supportedEntryPointV04,
+            supportedEntryPoint.isSupportedEntryPoint(entrypoint),
             "Not from supported entrypoint"
         );
         _;
@@ -70,6 +59,26 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
         _;
+    }
+
+    /// @dev add entryPoint to supported list;
+    /// @param entrypoint contract address
+    function addSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.addEntryPointToList(entrypoint);
+    }
+
+    /// @dev remove entryPoint from supported list;
+    /// @param entrypoint contract address
+    function removeSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.removeEntryPointToList(entrypoint);
+    }
+
+    /// @dev check entrypoint
+    /// @param entrypoint contract address
+    function isSupportedEntryPoint(
+        address entrypoint
+    ) external view returns (bool) {
+        return supportedEntryPoint.isSupportedEntryPoint(entrypoint);
     }
 
     function setTokenPriceLimitMax(

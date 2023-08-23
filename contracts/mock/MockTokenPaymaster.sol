@@ -11,9 +11,11 @@ import "../interfaces/ITokenPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
 import { MockIEntryPoint as IEntryPoint } from "./interfaces/MockIEntryPoint.sol";
 import "../interfaces/ISwapAdapter.sol";
+import "../paymaster/SupportedEntryPointLib.sol";
 
 contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     using UserOperationLib for UserOperation;
+    using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -25,9 +27,7 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMax;
     mapping(address => uint256) public tokenPriceLimitMin;
 
-    address public immutable supportedSimulateEntryPoint;
-    address public immutable supportedEntryPointV04;
-    address public immutable supportedEntryPointV06;
+    SupportedEntryPoint supportedEntryPoint;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -44,16 +44,10 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     constructor(
         address _verifyingSigner,
         address _priceOracle,
-        address _owner,
-        address _supportedSimulateEntryPoint,
-        address _supportedEntryPointV04,
-        address _supportedEntryPointV06
+        address _owner
     ) {
         verifyingSigner = _verifyingSigner;
         priceOracle = _priceOracle;
-        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
-        supportedEntryPointV04 = _supportedEntryPointV04;
-        supportedEntryPointV06 = _supportedEntryPointV06;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
@@ -62,9 +56,7 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
 
     modifier onlyEntryPoint(address entrypoint) {
         require(
-            entrypoint == supportedEntryPointV06 ||
-                entrypoint == supportedSimulateEntryPoint ||
-                entrypoint == supportedEntryPointV04,
+            supportedEntryPoint.isSupportedEntryPoint(entrypoint),
             "Not from supported entrypoint"
         );
         _;
@@ -89,6 +81,26 @@ contract MockTokenPaymaster is ITokenPaymaster, Ownable {
     ) public onlyOwner {
         tokenPriceLimitMin[token] = price;
         emit TokenPriceLimitMinSet(token, price);
+    }
+    
+    /// @dev add entryPoint to supported list;
+    /// @param entrypoint entryPoint contract address
+    function addSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.addEntryPointToList(entrypoint);
+    }
+
+    /// @dev remove entryPoint from supported list;
+    /// @param entrypoint entryPoint contract address
+    function removeSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.removeEntryPointToList(entrypoint);
+    }
+
+    /// @dev check entrypoint
+    /// @param entrypoint entryPoint contract address
+    function isSupportedEntryPoint(
+        address entrypoint
+    ) external view returns (bool) {
+        return supportedEntryPoint.isSupportedEntryPoint(entrypoint);
     }
 
     function postOp(

@@ -16,16 +16,15 @@ describe("EntryPoint", function () {
 
     let FreeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
-      EntryPoint.address,
-      EntryPoint.address
+      owner.address
     );
 
     await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
       bundler.address,
       true
     );
+
+    await FreeGasPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
       "contracts/wallet-0.4/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
@@ -84,13 +83,11 @@ describe("EntryPoint", function () {
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
-      EntryPoint.address,
-      EntryPoint.address
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     await PriceOracle.connect(owner).setPriceFeed(
       TestToken.address,

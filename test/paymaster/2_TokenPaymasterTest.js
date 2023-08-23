@@ -66,12 +66,9 @@ describe("TokenPaymaster", function () {
     );
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPoint.address,
-      entryPointContractV04.address,
-      entryPointContractV06.address
+      owner.address
     );
-
+    await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address);
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address);
 
     await priceOracle
@@ -100,15 +97,13 @@ describe("TokenPaymaster", function () {
 
     let tokenPaymasterWithEntryPoint = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPointContractSimulate.address,
-      entryPointContractV04.address,
-      entryPointContractV06.address,
+      owner.address
     );
 
     await tokenPaymasterWithEntryPoint
       .connect(owner)
       .setPriceOracle(priceOracle.address);
+    await tokenPaymasterWithEntryPoint.connect(owner).addSupportedEntryPoint(entryPointContract.address);
 
     return {
       entryPoint,
@@ -138,8 +133,8 @@ describe("TokenPaymaster", function () {
       let defaultPriceOracle = await tokenPaymaster.priceOracle();
       await expect(defaultPriceOracle).to.equal(priceOracle.address);
 
-      let defaultEntryPoint = await tokenPaymaster.supportedSimulateEntryPoint();
-      await expect(defaultEntryPoint).to.equal(entryPoint.address);
+      let isSupportedEntryPoint = await tokenPaymaster.isSupportedEntryPoint(entryPoint.address);
+      await expect(isSupportedEntryPoint).to.equal(true);
     });
   });
 
@@ -207,6 +202,51 @@ describe("TokenPaymaster", function () {
           .connect(alice)
           .setTokenPriceLimitMin(testToken.address, minPrice),
       ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+
+   describe("addSupportedEntryPoint", function () {
+    it("should revert if the caller is not owner", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      await expect(
+        tokenPaymaster.connect(alice).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should revert if the entryPoint has set", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      await expect(
+        tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("duplicate entrypoint");
+    });
+
+    it("should emit an event on RemoveSupportedEntryPoint", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      expect(await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address))
+          .to.emit(tokenPaymaster, "RemoveSupportedEntryPoint").withArgs(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(false);
+    });
+
+    it("should emit an event on AddSupportedEntryPoint", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address))
+          .to.emit(tokenPaymaster, "AddSupportedEntryPoint").withArgs(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+    });
+
+    it("should check correctly ", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(alice.address)).to.equal(false);
+      await tokenPaymaster.connect(owner).addSupportedEntryPoint(alice.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(alice.address)).to.equal(true);
     });
   });
 

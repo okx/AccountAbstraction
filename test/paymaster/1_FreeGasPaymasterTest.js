@@ -22,13 +22,8 @@ describe("FreeGasPaymaster", function () {
 
     let freeGasPaymaster = await FreeGasPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPointSimulate.address,
-      entryPointV04.address,
-      entryPointV06.address,
+      owner.address
     );
-
-
     // enum entryPointVersion {
     //     simulate,
     //     v04,
@@ -73,6 +68,8 @@ describe("FreeGasPaymaster", function () {
       entryPoint = entryPointV06; 
     }
 
+    await freeGasPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address);
+
     let TestToken = await ethers.getContractFactory("TestToken");
     let testToken = await TestToken.deploy();
 
@@ -89,7 +86,7 @@ describe("FreeGasPaymaster", function () {
 
   describe("constructor", function () {
     it("should read default value correctly", async function () {
-      const { owner, signer, freeGasPaymaster, entryPoint, version } = await loadFixture(
+      const { owner, signer, freeGasPaymaster, entryPoint} = await loadFixture(
         deploy
       );
 
@@ -99,17 +96,8 @@ describe("FreeGasPaymaster", function () {
       let defaultOwner = await freeGasPaymaster.owner();
       await expect(defaultOwner).to.equal(owner.address);
 
-
-      /// test different version entrypoint 
-      let defaultEntryPoint;
-      if (version == 0) {
-        defaultEntryPoint = await freeGasPaymaster.supportedSimulateEntryPoint();
-      } else if (version == 1) {
-        defaultEntryPoint = await freeGasPaymaster.supportedEntryPointV04();
-      } else {
-        defaultEntryPoint = await freeGasPaymaster.supportedEntryPointV06();
-      }
-      await expect(defaultEntryPoint).to.equal(entryPoint.address);
+      let isSupportedEntryPoint = await freeGasPaymaster.isSupportedEntryPoint(entryPoint.address);
+      await expect(isSupportedEntryPoint).to.equal(true);
      
     });
 
@@ -190,6 +178,51 @@ describe("FreeGasPaymaster", function () {
       await expect(
         freeGasPaymaster.connect(Alice).removeFromWhitelist(addresses)
       ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+
+  describe("addSupportedEntryPoint", function () {
+    it("should revert if the caller is not owner", async function () {
+      const { owner, freeGasPaymaster, Alice, entryPoint } = await loadFixture(deploy);
+
+      await expect(
+        freeGasPaymaster.connect(Alice).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should revert if the entryPoint has set", async function () {
+      const { owner, freeGasPaymaster, Alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      await expect(
+        freeGasPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("duplicate entrypoint");
+    });
+
+    it("should emit an event on RemoveSupportedEntryPoint", async function () {
+      const { owner, freeGasPaymaster, Alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      expect(await freeGasPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address))
+          .to.emit(freeGasPaymaster, "RemoveSupportedEntryPoint").withArgs(entryPoint.address);;
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(false);
+    });
+
+    it("should emit an event on AddSupportedEntryPoint", async function () {
+      const { owner, freeGasPaymaster, Alice, entryPoint } = await loadFixture(deploy);
+
+      await freeGasPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address);
+      expect(await freeGasPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address))
+          .to.emit(freeGasPaymaster, "AddSupportedEntryPoint").withArgs(entryPoint.address);;
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+    });
+
+    it("should check correctly ", async function () {
+      const { owner, freeGasPaymaster, Alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(Alice.address)).to.equal(false);
+      await freeGasPaymaster.connect(owner).addSupportedEntryPoint(Alice.address);
+      expect(await freeGasPaymaster.connect(owner).isSupportedEntryPoint(Alice.address)).to.equal(true);
     });
   });
 
@@ -376,4 +409,5 @@ describe("FreeGasPaymaster", function () {
       await expect(result[1].toNumber()).to.equal(1234567);
     });
   });
+
 });

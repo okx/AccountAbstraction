@@ -9,40 +9,29 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IFreeGasPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
 import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
+import "./SupportedEntryPointLib.sol";
 
 contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     using UserOperationLib for UserOperation;
+    using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     uint256 internal constant SIG_VALIDATION_FAILED = 1;
     address public immutable verifyingSigner;
     address public immutable ADDRESS_THIS;
-    address public immutable supportedSimulateEntryPoint;
-    address public immutable supportedEntryPointV04;
-    address public immutable supportedEntryPointV06;
+    SupportedEntryPoint supportedEntryPoint;
     mapping(address => bool) public whitelist;
 
-    constructor(
-        address _verifyingSigner,
-        address _owner,
-        address _supportedSimulateEntryPoint,
-        address _supportedEntryPointV04,
-        address _supportedEntryPointV06
-    ) {
+    constructor(address _verifyingSigner, address _owner) {
         verifyingSigner = _verifyingSigner;
         _transferOwnership(_owner);
-        supportedSimulateEntryPoint = _supportedSimulateEntryPoint;
-        supportedEntryPointV04 = _supportedEntryPointV04;
-        supportedEntryPointV06 = _supportedEntryPointV06;
         ADDRESS_THIS = address(this);
     }
 
     modifier onlyEntryPoint(address entrypoint) {
         require(
-            entrypoint == supportedEntryPointV06 ||
-                entrypoint == supportedSimulateEntryPoint ||
-                entrypoint == supportedEntryPointV04,
+            supportedEntryPoint.isSupportedEntryPoint(entrypoint),
             "Not from supported entrypoint"
         );
         _;
@@ -51,6 +40,26 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
         _;
+    }
+
+    /// @dev add entryPoint to supported list;
+    /// @param entrypoint entryPoint contract address
+    function addSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.addEntryPointToList(entrypoint);
+    }
+
+    /// @dev remove entryPoint from supported list;
+    /// @param entrypoint entryPoint contract address
+    function removeSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.removeEntryPointToList(entrypoint);
+    }
+
+    /// @dev check entrypoint
+    /// @param entrypoint entryPoint contract address
+    function isSupportedEntryPoint(
+        address entrypoint
+    ) external view returns (bool) {
+        return supportedEntryPoint.isSupportedEntryPoint(entrypoint);
     }
 
     function addToWhitelist(address[] calldata addresses) external onlyOwner {

@@ -121,11 +121,9 @@ describe("EntryPointSimulations-0.6", function () {
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPointSimulation0_6.address,
-      entrypoint0_4.address,
-      entrypoint0_6.address
+      owner.address
     );
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(entryPointSimulation0_6.address);
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
 

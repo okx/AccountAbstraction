@@ -90,14 +90,11 @@ describe("TokenPaymaster", function () {
     );
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPointSimulate.address,
-      entryPointV04.address,
-      entryPointV06.address
+      owner.address
     );
 
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address)
-
+    await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address);
 
     await priceOracle
       .connect(owner)

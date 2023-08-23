@@ -60,13 +60,11 @@ describe("UniswapV3Adapter", function () {
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
-      EntryPoint.address,
-      EntryPoint.address
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
 
     await PriceOracle.connect(owner).setPriceFeed(

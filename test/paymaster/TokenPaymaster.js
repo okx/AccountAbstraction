@@ -37,13 +37,11 @@ describe("TokenPaymaster", function () {
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
-      EntryPoint.address,
-      EntryPoint.address
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
       TestToken.address,
@@ -123,8 +121,8 @@ describe("TokenPaymaster", function () {
     );
     await expect(minTokenPrice).to.equal(minPrice);
 
-    let defaultEntryPoint = await TokenPaymaster.supportedSimulateEntryPoint();
-    await expect(defaultEntryPoint).to.equal(EntryPoint.address);
+    let isSupportedEntryPoint = await TokenPaymaster.isSupportedEntryPoint(EntryPoint.address);
+    await expect(isSupportedEntryPoint).to.equal(true);
   });
 
   it("should validatePaymasterUserOp", async function () {
@@ -350,13 +348,11 @@ describe("TokenPaymaster", function () {
 
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
-      EntryPoint.address,
-      EntryPoint.address
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     // Deploy Mock UniswapV2Router
     let MockUniswapV2RouterFactory = await ethers.getContractFactory(
