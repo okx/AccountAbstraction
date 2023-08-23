@@ -29,7 +29,7 @@ library SupportedEntryPointLib {
     ) internal {
         require(self.data[entrypoint], "entrypoint not exists");
 
-        self.data[entrypoint] = false;
+        delete self.data[entrypoint];
         emit RemoveSupportedEntryPoint(entrypoint, block.timestamp);
     }
 
