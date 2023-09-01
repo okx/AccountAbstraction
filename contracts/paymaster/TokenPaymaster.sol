@@ -11,6 +11,7 @@ import "../interfaces/IPriceOracle.sol";
 import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
 import "../interfaces/ISwapAdapter.sol";
 import "./SupportedEntryPointLib.sol";
+import "../@eth-infinitism-v0.6/core/Helpers.sol";
 
 contract TokenPaymaster is ITokenPaymaster, Ownable {
     using UserOperationLib for UserOperation;
@@ -192,7 +193,9 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
                                 )
                         )
                 ),
-                sigTime
+                _packValidationData(
+                    ValidationData(address(0), 0, uint48(sigTime))
+                )
             );
         } else {
             return ("", SIG_VALIDATION_FAILED);
@@ -240,7 +243,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
                             )
                     )
             ),
-            sigTime
+            _packValidationData(ValidationData(address(0), 0, uint48(sigTime)))
         );
     }
 

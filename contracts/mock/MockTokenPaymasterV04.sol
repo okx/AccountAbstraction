@@ -13,7 +13,7 @@ import { MockIEntryPoint as IEntryPoint } from "./interfaces/MockIEntryPoint.sol
 import "../interfaces/ISwapAdapter.sol";
 import "../paymaster/SupportedEntryPointLib.sol";
 
-contract MockTokenPaymaster is ITokenPaymaster, Ownable {
+contract MockTokenPaymasterV04 is ITokenPaymaster, Ownable {
     using UserOperationLib for UserOperation;
     using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
