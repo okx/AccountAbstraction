@@ -77,14 +77,15 @@ describe("EntryPoint", function () {
     let PriceOracle = await PriceOracleFactory.deploy(owner.address);
 
     let TokenPaymasterFactory = await ethers.getContractFactory(
-      "TokenPaymaster"
+      "MockTokenPaymasterV04"
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
+      PriceOracle.address,
       owner.address
     );
 
-    await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    // await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
     await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
 
@@ -1326,7 +1327,7 @@ describe("EntryPoint", function () {
         } = await loadFixture(deploy);
 
         let MockTokenPaymaster = await ethers.getContractFactory(
-          "MockTokenPaymaster"
+          "MockTokenPaymasterV04"
         );
         let TokenPaymaster = await MockTokenPaymaster.deploy(
           signer.address,
@@ -1711,7 +1712,7 @@ describe("EntryPoint", function () {
             TokenPaymaster: TokenPaymaster,
             TestToken: TestToken,
             exchangeRate: exchangeRate,
-            sigTime: 12345,
+            sigTime: 123456,
           },
           userOp
         );
@@ -1733,11 +1734,13 @@ describe("EntryPoint", function () {
 
         let tx = await EntryPoint.connect(bundler).mockhandleOps([userOp]);
 
-        let blockNumber = (await tx.wait()).blockNumber;
+        let receipt = await tx.wait();
+        let blockNumber = receipt.blockNumber;
         let revertEvents = await EntryPoint.queryFilter(
           "HandleUserOpRevertReason",
           blockNumber
         );
+
         await expect(revertEvents.length).to.equal(1);
         let revertEvent = revertEvents[0].args;
 
@@ -1822,7 +1825,7 @@ describe("EntryPoint", function () {
         await expect(revertEvent.sender).to.equal(sender);
         await expect(revertEvent.nonce).to.equal(1);
         await expect(await decodeReason(revertEvent.revertReason)).to.equal(
-          "ERC20: transfer amount exceeds balance"
+          "AA50 postOp revert"
         );
       });
 
@@ -1840,7 +1843,7 @@ describe("EntryPoint", function () {
         } = await loadFixture(deploy);
 
         let MockTokenPaymaster = await ethers.getContractFactory(
-          "MockTokenPaymaster"
+          "MockTokenPaymasterV04"
         );
 
         let TokenPaymaster = await MockTokenPaymaster.deploy(

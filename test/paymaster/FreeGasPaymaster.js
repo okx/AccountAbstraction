@@ -63,6 +63,8 @@ describe("FreeGasPaymaster", function () {
     );
 
     await expect(result[0]).to.equal("0x");
-    await expect(result[1].toNumber()).to.equal(1234567);
+    let sigTime = ethers.BigNumber.from("1234567");
+    let shift = ethers.BigNumber.from("2").pow(160);
+    await expect(result[1]).to.equal(sigTime.mul(shift));
   });
 });
