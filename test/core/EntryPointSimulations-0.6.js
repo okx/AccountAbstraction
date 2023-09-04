@@ -364,7 +364,7 @@ describe("EntryPointSimulations-0.6", function () {
         paymasterAndData: "0x",
         owner: alice,
         SmartAccount: smartAccount0_6,
-        EntryPoint: entrypoint0_6.address,
+        EntryPoint: entryPointSimulation0_6.address,
         sigType: 1,
         sigTime: 0,
       });
@@ -450,7 +450,7 @@ describe("EntryPointSimulations-0.6", function () {
         paymasterAndData: "0x",
         owner: alice,
         SmartAccount: smartAccount0_6,
-        EntryPoint: entrypoint0_6.address,
+        EntryPoint: entryPointSimulation0_6.address,
         sigType: 1,
         sigTime: 0,
       });
@@ -482,7 +482,7 @@ describe("EntryPointSimulations-0.6", function () {
         paymasterAndData: "0x",
         owner: alice,
         SmartAccount: smartAccount0_6,
-        EntryPoint: entrypoint0_6.address,
+        EntryPoint: entryPointSimulation0_6.address,
         sigType: 1,
         sigTime: 0,
       });
@@ -498,9 +498,91 @@ describe("EntryPointSimulations-0.6", function () {
       parsedError = entryPointSimulation0_6.interface.parseError(
         await bundler.call(callDetails)
       );
-
       await expect(parsedError.args[1]).to.equal(1);
     });
+
+    it("Should correctly revert aggeragator", async function () {
+      let {
+        owner,
+        alice,
+        bundler,
+        entrypoint0_6,
+        smartAccount0_4,
+        smartAccount0_6,
+        smartAccountProxyFactory,
+        entryPointSimulation0_6,
+      } = await loadFixture(deploy);
+
+      let initializeData = smartAccount0_4.interface.encodeFunctionData(
+        "Initialize",
+        [alice.address]
+      );
+
+      let AAAddress = await smartAccountProxyFactory.getAddress(
+        smartAccount0_6.address,
+        initializeData,
+        0
+      );
+
+      // add some fund
+      await owner.sendTransaction({
+        value: ethers.utils.parseEther("1.0"),
+        to: AAAddress,
+      });
+
+      // update safeSingleton to 0.6
+      await smartAccountProxyFactory.setSafeSingleton(
+        smartAccount0_6.address,
+        true
+      );
+
+      await smartAccountProxyFactory.setSafeSingleton(
+        smartAccount0_4.address,
+        false
+      );
+
+      await smartAccountProxyFactory.createAccount(
+        smartAccount0_6.address,
+        initializeData,
+        0
+      );
+
+      let events = await smartAccountProxyFactory.queryFilter("ProxyCreation");
+      await expect(events[0].args.proxy).to.equal(AAAddress);
+
+      callData = smartAccount0_6.interface.encodeFunctionData(
+        "execTransactionFromEntrypoint",
+        [alice.address, ethers.utils.parseEther("0.1"), "0x"]
+      );
+
+      let userOp = await Utils.generateSignedUOP({
+        sender: AAAddress,
+        nonce: 0,
+        initCode: "0x",
+        callData: callData,
+        paymasterAndData: "0x",
+        owner: owner,
+        SmartAccount: smartAccount0_6,
+        EntryPoint: entryPointSimulation0_6.address,
+        sigType: 1,
+        sigTime: 0,
+      });
+
+      let callDetails = {
+        to: entryPointSimulation0_6.address,
+        data: entryPointSimulation0_6.interface.encodeFunctionData(
+          "simulateHandleOp",
+          [userOp, ethers.constants.AddressZero, "0x"]
+        ),
+      };
+
+      let parsedError = entryPointSimulation0_6.interface.parseError(
+        await bundler.call(callDetails)
+      );
+
+      await expect(parsedError.args.aggregator).to.equal("0x0000000000000000000000000000000000000001");
+    });
+
 
     it("Should correctly revert gas Limit", async function () {
       let {
@@ -564,7 +646,7 @@ describe("EntryPointSimulations-0.6", function () {
         paymasterAndData: "0x",
         owner: alice,
         SmartAccount: smartAccount0_6,
-        EntryPoint: entrypoint0_6.address,
+        EntryPoint: entryPointSimulation0_6.address,
         sigType: 1,
         sigTime: 0,
       });
@@ -580,6 +662,7 @@ describe("EntryPointSimulations-0.6", function () {
       const parsedError = entryPointSimulation0_6.interface.parseError(
         await bundler.call(callDetails)
       );
+
 
       k = 1.5;
 
