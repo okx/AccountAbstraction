@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../interfaces/ISmartAccountProxy.sol";
+import "../../interfaces/ISmartAccountProxy.sol";
 
 /// @title SmartAccountProxy - Generic proxy contract allows to execute all transactions applying the code of a master contract.
 contract SmartAccountProxy is ISmartAccountProxy {

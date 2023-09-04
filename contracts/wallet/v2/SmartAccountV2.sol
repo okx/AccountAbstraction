@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../interfaces/IValidations.sol";
-import "./base/SignatureManager.sol";
-import "./base/ModuleManager.sol";
-import "./base/OwnerManager.sol";
-import "./base/FallbackManager.sol";
-import "./base/GuardManager.sol";
-import "./common/EtherPaymentFallback.sol";
-import "./common/Singleton.sol";
-import "./common/SignatureDecoder.sol";
-import "./common/SecuredTokenTransfer.sol";
+import "../../interfaces/IValidations.sol";
+import "../base/SignatureManager.sol";
+import "../base/ModuleManager.sol";
+import "../base/OwnerManager.sol";
+import "../base/FallbackManager.sol";
+import "../base/GuardManager.sol";
+import "../common/EtherPaymentFallback.sol";
+import "../common/Singleton.sol";
+import "../common/SignatureDecoder.sol";
+import "../common/SecuredTokenTransfer.sol";
 
-contract SmartAccount is
+contract SmartAccountV2 is
     EtherPaymentFallback,
     Singleton,
     ModuleManager,
@@ -59,9 +59,10 @@ contract SmartAccount is
         _;
     }
 
-    function Initialize(address _owner) external {
+    function initialize(address creator, bytes memory /* place holder for future */) external {
         require(getOwner() == address(0), "account: have set up");
-        initializeOwners(_owner);
+        // set creator as owner by default.
+        initializeOwners(creator);
         initializeFallbackHandler(FALLBACKHANDLER);
         initializeModules();
     }

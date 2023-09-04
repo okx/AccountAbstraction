@@ -2,23 +2,22 @@
 pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/utils/Create2.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../wallet/v1/SmartAccount.sol";
-import "../wallet/v1/SmartAccountProxy.sol";
+import "./SmartAccountV2.sol";
+import "./SmartAccountProxyV2.sol";
+import {AccountFactoryStorage} from "./AccountFactoryStorage.sol";
 
 /**
  * A wrapper factory contract to deploy SmartAccount as an Account-Abstraction wallet contract.
  */
-contract MockWrongDeployFactory is Ownable {
-    event ProxyCreation(SmartAccountProxy proxy, address singleton);
+contract AccountFactoryV2 is AccountFactoryStorage {
+    event ProxyCreation(SmartAccountProxyV2 proxy, address singleton);
     event SafeSingletonSet(address safeSingleton, bool value);
 
-    mapping(address => bool) public safeSingleton;
-    mapping(address => bool) public walletWhiteList;
-
-    constructor(address _safeSingleton, address _owner) {
-        safeSingleton[_safeSingleton] = true;
-        _transferOwnership(_owner);
+    function initialize(address walletTemplate) public {
+        require(initialized == 0, "only initialize once");
+        initialized = 1;
+        safeSingleton[walletTemplate] = true;
+        emit SafeSingletonSet(walletTemplate, true);
     }
 
     function setSafeSingleton(
@@ -31,30 +30,32 @@ contract MockWrongDeployFactory is Ownable {
 
     /// @dev Allows to retrieve the runtime code of a deployed Proxy. This can be used to check that the expected Proxy was deployed.
     function proxyRuntimeCode() public pure returns (bytes memory) {
-        return type(SmartAccountProxy).runtimeCode;
+        return type(SmartAccountProxyV2).runtimeCode;
     }
 
     /// @dev Allows to retrieve the creation code used for the Proxy deployment. With this it is easily possible to calculate predicted address.
     function proxyCreationCode() public pure returns (bytes memory) {
-        return type(SmartAccountProxy).creationCode;
+        return type(SmartAccountProxyV2).creationCode;
     }
 
     /// @dev Allows to create new proxy contact using CREATE2 but it doesn't run the initializer.
     ///      This method is only meant as an utility to be called from other methods
-    /// @param _singleton Address of singleton contract.
     /// @param initializer Payload for message call sent to new proxy contract.
     /// @param saltNonce Nonce that will be used to generate the salt to calculate the address of the new proxy contract.
     function deployProxyWithNonce(
-        address _singleton,
+        address, /* keep for external apis */
         bytes memory initializer,
         uint256 saltNonce
-    ) internal returns (SmartAccountProxy proxy) {
+    ) internal returns (SmartAccountProxyV2 proxy) {
         // If the initializer changes the proxy address should change too. Hashing the initializer data is cheaper than just concatinating it
+        address creator = abi.decode(initializer, (address));
+
         bytes32 salt = keccak256(
-            abi.encodePacked(keccak256(initializer), saltNonce)
+            abi.encodePacked(creator, saltNonce)
         );
+
         bytes memory deploymentData = abi.encodePacked(
-            type(SmartAccountProxy).creationCode
+            type(SmartAccountProxyV2).creationCode
         );
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -77,12 +78,13 @@ contract MockWrongDeployFactory is Ownable {
         address _singleton,
         bytes memory initializer,
         uint256 saltNonce
-    ) internal returns (SmartAccountProxy proxy) {
+    ) internal returns (SmartAccountProxyV2 proxy) {
         proxy = deployProxyWithNonce(_singleton, initializer, saltNonce);
+
         if (initializer.length > 0) {
             // solhint-disable-next-line no-inline-assembly
             bytes memory initdata = abi.encodeWithSelector(
-                SmartAccountProxy.initialize.selector,
+                SmartAccountProxyV2.initialize.selector,
                 _singleton,
                 initializer
             );
@@ -116,7 +118,12 @@ contract MockWrongDeployFactory is Ownable {
         require(safeSingleton[_safeSingleton], "Invalid singleton");
 
         address addr = getAddress(_safeSingleton, initializer, salt);
-        return addr;
+        uint256 codeSize = addr.code.length;
+        if (codeSize > 0) {
+            return addr;
+        }
+
+        return address(createProxyWithNonce(_safeSingleton, initializer, salt));
     }
 
     /**
@@ -124,16 +131,19 @@ contract MockWrongDeployFactory is Ownable {
      * (uses the same "create2 signature" used by SmartAccountProxyFactory.createProxyWithNonce)
      */
     function getAddress(
-        address _safeSingleton,
+        address, /* useless value, keep for external apis */
         bytes memory initializer,
         uint256 salt
     ) public view returns (address) {
         //copied from deployProxyWithNonce
+        // omit another parameters while create wallet address
+        address creator = abi.decode(initializer, (address));
+
         bytes32 salt2 = keccak256(
-            abi.encodePacked(keccak256(initializer), salt)
+            abi.encodePacked(creator, salt)
         );
         bytes memory deploymentData = abi.encodePacked(
-            type(SmartAccountProxy).creationCode
+            type(SmartAccountProxyV2).creationCode
         );
         return
             Create2.computeAddress(

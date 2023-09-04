@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../SmartAccount.sol";
+import "../v1/SmartAccount.sol";
 
 /// @title Simulate Transaction Accessor - can be used with StorageAccessible to simulate Safe transactions
 /// @author Richard Meissner - <richard@gnosis.pm>
