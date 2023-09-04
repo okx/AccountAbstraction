@@ -10,6 +10,17 @@ let preVerificationGas = 0;
 let maxFeePerGas = 100000000;
 let maxPriorityFeePerGas = 100000000;
 
+async function getSigTime(sigTime, isV06 = false) {
+  if (sigTime == null || sigTime == 0) {
+    sigTime = ethers.BigNumber.from("281474976710655");
+  }
+
+  if(isV06) {
+    sigTime = sigTime.mul(ethers.BigNumber.from("2").pow(160));
+  }
+  return sigTime;
+}
+
 async function generateAccount(params) {
   if (params.random == null) {
     params.random = Math.floor(Math.random() * 1000001);
@@ -110,7 +121,7 @@ async function generateSignedUOP(params) {
 async function generateFreePaymasterUOP(params, sender, nonce, callData) {
   if (params.sigTime == null || params.sigTime == 0) {
     params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x000000000000ffffffffffff0000000000000000000000000000000000000000"
     );
   }
   let userOp = await generateUOP(sender, nonce, "0x", callData, "0x");
@@ -134,7 +145,7 @@ async function generateFreePaymasterUOP(params, sender, nonce, callData) {
 async function generateFreePaymasterWithUOP(userOp, params) {
   if (params.sigTime == null || params.sigTime == 0) {
     params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x000000000000ffffffffffff0000000000000000000000000000000000000000"
     );
   }
   const paymastersignature = await params.signer.signMessage(
@@ -154,9 +165,13 @@ async function generateFreePaymasterWithUOP(userOp, params) {
   return userOp;
 }
 
-async function paymasterSign(params, userOp) {
+async function paymasterSign(params, userOp, isV06 = false) {
   if (params.sigTime == null || params.sigTime == 0) {
     params.sigTime = ethers.BigNumber.from("281474976710655");
+  }
+
+  if(isV06) {
+     params.sigTime =  params.sigTime.mul(ethers.BigNumber.from("2").pow(160));
   }
 
   const paymastersignature = await params.signer.signMessage(
@@ -449,4 +464,5 @@ module.exports = {
   deploy,
   getDeployFactory,
   createDeployFactory,
+  getSigTime
 };
