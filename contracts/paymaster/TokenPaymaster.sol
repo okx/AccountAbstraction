@@ -315,6 +315,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
 
     function setSwapAdapter(address _swapAdapter) external onlyOwner {
         swapAdapter = _swapAdapter;
+        emit SetSwapAdapter(_swapAdapter);
     }
 
     function setSlippage(
@@ -322,6 +323,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         uint256 _slippage
     ) external virtual onlyOwner {
         slippages[_token] = _slippage;
+        emit SetSlippage(_token, _slippage);
     }
 
     function setPriceOracle(address _priceOracle) external onlyOwner {

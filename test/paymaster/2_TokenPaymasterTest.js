@@ -205,7 +205,7 @@ describe("TokenPaymaster", function () {
     });
   });
 
-   describe("addSupportedEntryPoint", function () {
+  describe("addSupportedEntryPoint", function () {
     it("should revert if the caller is not owner", async function () {
       const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
 
@@ -228,7 +228,7 @@ describe("TokenPaymaster", function () {
 
       expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
       expect(await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address))
-          .to.emit(tokenPaymaster, "RemoveSupportedEntryPoint").withArgs(entryPoint.address);
+        .to.emit(tokenPaymaster, "RemoveSupportedEntryPoint").withArgs(entryPoint.address);
       expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(false);
     });
 
@@ -237,7 +237,7 @@ describe("TokenPaymaster", function () {
 
       await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address);
       expect(await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address))
-          .to.emit(tokenPaymaster, "AddSupportedEntryPoint").withArgs(entryPoint.address);
+        .to.emit(tokenPaymaster, "AddSupportedEntryPoint").withArgs(entryPoint.address);
       expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
     });
 
@@ -760,4 +760,21 @@ describe("TokenPaymaster", function () {
         .withArgs(newPriceOracle.address);
     });
   });
+
+  describe("setSwapAdapter", function () {
+    it("should emit SetSwapAdapter", async function () {
+      const { owner, tokenPaymaster } =
+        await loadFixture(deploy);
+      expect(await tokenPaymaster.connect(owner).setSwapAdapter(owner.address)).to.emit(tokenPaymaster, "SetSwapAdapter").withArgs(owner.address);
+    });
+  });
+
+  describe("setSlippage", function () {
+    it("should emit SetSlippage", async function () {
+      const { owner, tokenPaymaster } =
+        await loadFixture(deploy);
+      expect(await tokenPaymaster.connect(owner).setSlippage(owner.address, 100)).to.emit(tokenPaymaster, "SetSlippage").withArgs(owner.address, 100);
+    });
+  });
+
 });

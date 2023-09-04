@@ -6,6 +6,8 @@ import "../@eth-infinitism-v0.6/interfaces/IPaymaster.sol";
 interface ITokenPaymaster is IPaymaster {
     event TokenPriceLimitMaxSet(address indexed token, uint256 price);
     event TokenPriceLimitMinSet(address indexed token, uint256 price);
+    event SetSlippage(address indexed token, uint256 slippage);
+    event SetSwapAdapter(address indexed swapAdapter);
     event AddedToWhitelist(address indexed account);
     event RemovedFromWhitelist(address indexed account);
     event Withdrawal(address indexed token, uint256 amount);
