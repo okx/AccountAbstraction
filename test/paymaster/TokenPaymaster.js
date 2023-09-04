@@ -170,11 +170,9 @@ describe("TokenPaymaster", function () {
       ["bytes32", "address", "address", "uint256", "uint256"],
       [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
-    await expect(result[0]).to.equal(expectContext);
 
-    let sigTime = ethers.BigNumber.from("1234567");
-    let shift = ethers.BigNumber.from("2").pow(160);
-    await expect(result[1]).to.equal(sigTime.mul(shift));
+    await expect(result[0]).to.equal(expectContext);
+    await expect(result[1]).to.equal(1234567);
   });
 
   it("should validatePaymasterUserOp using oraclePrice when above max price", async function () {
@@ -223,10 +221,8 @@ describe("TokenPaymaster", function () {
       [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
 
-    let sigTime = ethers.BigNumber.from("1234567");
-    let shift = ethers.BigNumber.from("2").pow(160);
     await expect(result[0]).to.equal(expectContext);
-    await expect(result[1]).to.equal(sigTime.mul(shift));
+    await expect(result[1]).to.equal(1234567);
   });
 
   it("should validatePaymasterUserOp using oraclePrice when below min price", async function () {
@@ -274,11 +270,9 @@ describe("TokenPaymaster", function () {
       ["bytes32", "address", "address", "uint256", "uint256"],
       [userOpHash, userOp.sender, TestToken.address, exchangeRate, postOpGas],
     );
-    
-    let sigTime = ethers.BigNumber.from("1234567");
-    let shift = ethers.BigNumber.from("2").pow(160);
+
     await expect(result[0]).to.equal(expectContext);
-    await expect(result[1]).to.equal(sigTime.mul(shift));
+    await expect(result[1]).to.equal(1234567);
   });
 
   it("should execute postOp", async function () {

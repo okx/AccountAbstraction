@@ -10,7 +10,6 @@ import "../interfaces/IFreeGasPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
 import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
 import "./SupportedEntryPointLib.sol";
-import "../@eth-infinitism-v0.6/core/Helpers.sol";
 
 contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     using UserOperationLib for UserOperation;
@@ -140,12 +139,7 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
         ) {
             return ("", SIG_VALIDATION_FAILED);
         } else {
-            return (
-                "",
-                _packValidationData(
-                    ValidationData(address(0), 0, uint48(sigTime))
-                )
-            );
+            return ("", sigTime);
         }
     }
 
