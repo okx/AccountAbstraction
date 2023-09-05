@@ -82,7 +82,7 @@ describe("FallbackManager", function () {
     }
 
     describe("setFallbackHandler", function () {
-        it("shuold revert with handler illegal", async function () {
+        it("should revert with handler illegal", async function () {
             let { Alice, AA } = await loadFixture(deploy);
 
             // enocde functioncall of updateImplement
@@ -109,7 +109,7 @@ describe("FallbackManager", function () {
             await expect(await AA.getFallbackHandler()).to.equal(Alice.address);
         });
 
-        it("shuold change slot correctly", async function () {
+        it("should change slot correctly", async function () {
             let { Alice, AA } = await loadFixture(deploy);
 
             let setFallbackHandlerCalldata = AA.interface.encodeFunctionData(

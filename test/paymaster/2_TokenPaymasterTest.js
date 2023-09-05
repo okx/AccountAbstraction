@@ -765,7 +765,7 @@ describe("TokenPaymaster", function () {
     it("should emit SetSwapAdapter", async function () {
       const { owner, tokenPaymaster } =
         await loadFixture(deploy);
-      expect(await tokenPaymaster.connect(owner).setSwapAdapter(owner.address)).to.emit(tokenPaymaster, "SetSwapAdapter").withArgs(owner.address);
+      expect(await tokenPaymaster.connect(owner).setSwapAdapter(owner.address)).to.emit(tokenPaymaster, "SwapAdapterSet").withArgs(owner.address);
     });
   });
 
@@ -773,7 +773,7 @@ describe("TokenPaymaster", function () {
     it("should emit SetSlippage", async function () {
       const { owner, tokenPaymaster } =
         await loadFixture(deploy);
-      expect(await tokenPaymaster.connect(owner).setSlippage(owner.address, 100)).to.emit(tokenPaymaster, "SetSlippage").withArgs(owner.address, 100);
+      expect(await tokenPaymaster.connect(owner).setSlippage(owner.address, 100)).to.emit(tokenPaymaster, "SlippageSet").withArgs(owner.address, 100);
     });
   });
 
