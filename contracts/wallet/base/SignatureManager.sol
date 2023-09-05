@@ -187,19 +187,32 @@ contract SignatureManager is
         UserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
-        uint256 deadline = uint256(bytes32(userOp.signature[1:33]));
-        if (deadline > type(uint48).max) {
-            return SIG_VALIDATION_FAILED;
-        }
+        uint256 sigTime = uint256(bytes32(userOp.signature[1:33]));
 
         if (ECDSA.recover(userOpHash, userOp.signature[33:]) != owner) {
             return SIG_VALIDATION_FAILED;
         } else {
-            return
-                _packValidationData(
-                    ValidationData(address(0), 0, uint48(deadline))
-                );
+            return _formatSigtimeToValidationData(sigTime);
         }
+    }
+
+    /// @dev format sigtime to validationData struct
+    /// @param sigTime: 0x[address 20 bytes][after 6 bytes][until 6 bytes]
+    /// @return data: ValidationData
+    function _formatSigtimeToValidationData(
+        uint256 sigTime
+    ) private pure returns (uint256) {
+        uint48 validUntil = uint48(sigTime);
+        if (validUntil == 0) {
+            validUntil = type(uint48).max;
+        }
+        uint48 validAfter = uint48(sigTime >> 48);
+        address aggregator = address(uint160(sigTime >> (48 + 48)));
+
+        return
+            _packValidationData(
+                ValidationData(aggregator, validAfter, validUntil)
+            );
     }
 
     function entryPoint() public view virtual override returns (IEntryPoint) {
