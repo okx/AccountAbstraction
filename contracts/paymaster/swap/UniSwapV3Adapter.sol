@@ -7,7 +7,6 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol";
 import "../../interfaces/IWETH9.sol";
 import "../../interfaces/ISwapAdapter.sol";
-import "../../interfaces/IPriceOracle.sol";
 
 contract UniSwapV3Adapter is ISwapAdapter, Ownable {
     ISwapRouter public immutable uniV3Router;

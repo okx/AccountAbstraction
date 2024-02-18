@@ -2,14 +2,16 @@
 pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IStorage.sol";
-import "../interfaces/IStakeManager.sol";
+import "../interfaces/IValidations.sol";
+import "../@eth-infinitism-v0.6/interfaces/IStakeManager.sol";
 
 contract BundlerDepositHelper is Ownable {
     mapping(address => bool) public vaildEntryPoint;
+    address public immutable validations;
 
-    constructor(address _owner) {
+    constructor(address _owner, address _validations) {
         _transferOwnership(_owner);
+        validations = _validations;
     }
 
     function setValidEntryPoint(
@@ -40,7 +42,7 @@ contract BundlerDepositHelper is Ownable {
             uint256 amount = amounts[i];
 
             require(
-                IStorage(entryPoint).officialBundlerWhiteList(bundler),
+                IValidations(validations).officialBundlerWhiteList(bundler),
                 "BundlerDepositHelper: Invalid bundler"
             );
 

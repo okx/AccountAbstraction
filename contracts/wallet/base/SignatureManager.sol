@@ -3,22 +3,15 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../interfaces/ISignatureValidator.sol";
-import "../../interfaces/IAccount.sol";
+import "../../@eth-infinitism-v0.6/core/BaseAccount.sol";
 import "../common/Enum.sol";
 import "../common/SignatureDecoder.sol";
 import "./OwnerManager.sol";
 
-contract SignatureManager is
-    IAccount,
-    ISignatureValidatorConstants,
-    Enum,
-    OwnerManager,
-    SignatureDecoder
-{
+contract SignatureManager is BaseAccount, Enum, OwnerManager, SignatureDecoder {
     using UserOperationLib for UserOperation;
 
-    uint256 internal constant NONCE_VALIDATION_FAILED = 2;
+    IEntryPoint internal immutable ENTRYPOINT;
 
     bytes32 internal immutable HASH_NAME;
 
@@ -30,7 +23,8 @@ contract SignatureManager is
 
     bytes32 internal immutable EIP712_ORDER_STRUCT_SCHEMA_HASH;
 
-    uint256 internal constant SIG_VALIDATION_FAILED = 1;
+    // keccak256("isValidSignature(bytes32 _hash)")
+    bytes32 public constant ERC1271_TYPE_HASH = 0x0c000213b8f2b5d6b75cba966002ab299d4108f2bf3d1dd73953ad6092f72e75;
 
     struct SignMessage {
         address sender;
@@ -49,7 +43,9 @@ contract SignatureManager is
 
     /* solhint-enable var-name-mixedcase */
 
-    constructor(string memory name, string memory version) {
+    constructor(address entrypoint, string memory name, string memory version) {
+        ENTRYPOINT = IEntryPoint(entrypoint);
+
         HASH_NAME = keccak256(bytes(name));
         HASH_VERSION = keccak256(bytes(version));
         TYPE_HASH = keccak256(
@@ -163,9 +159,8 @@ contract SignatureManager is
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32,
-        address,
         uint256 missingAccountFunds
-    ) public virtual returns (uint256) {
+    ) public virtual override returns (uint256) {
         if (missingAccountFunds != 0) {
             payable(msg.sender).call{
                 value: missingAccountFunds,
@@ -173,68 +168,84 @@ contract SignatureManager is
             }("");
         }
 
-        unchecked {
-            if (userOp.nonce != nonce++) {
-                return NONCE_VALIDATION_FAILED;
-            }
-        }
-
-        if (
-            ECDSA.recover(
+        return
+            _validateSignature(
+                userOp,
                 getUOPSignedHash(
                     SignatureType(uint8(bytes1(userOp.signature[0:1]))),
                     msg.sender,
                     userOp
-                ),
-                userOp.signature[33:]
-            ) != owner
-        ) {
+                )
+            );
+    }
+
+    function _validateSignature(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256 validationData) {
+        uint256 sigTime = uint256(bytes32(userOp.signature[1:33]));
+
+        uint formatSigTime = _formatSigtimeToValidationData(sigTime);
+        if (ECDSA.recover(userOpHash, userOp.signature[33:]) != owner) {
             return SIG_VALIDATION_FAILED;
         } else {
-            return uint256(bytes32(userOp.signature[1:33]));
+            return formatSigTime;
         }
     }
 
-    function validateUserOpWithoutSig(
-        UserOperation calldata userOp,
-        bytes32,
-        address,
-        uint256 missingAccountFunds
-    ) public virtual returns (uint256) {
-        if (missingAccountFunds != 0) {
-            payable(msg.sender).call{
-                value: missingAccountFunds,
-                gas: type(uint256).max
-            }("");
+    /// @dev format sigtime to validationData struct
+    /// @param sigTime: 0x[address 20 bytes][after 6 bytes][until 6 bytes]
+    /// @return data: ValidationData
+    function _formatSigtimeToValidationData(
+        uint256 sigTime
+    ) private pure returns (uint256) {
+        uint48 validUntil = uint48(sigTime);
+        if (validUntil == 0) {
+            validUntil = type(uint48).max;
         }
+        uint48 validAfter = uint48(sigTime >> 48);
+        address aggregator = address(uint160(sigTime >> (48 + 48)));
 
-        unchecked {
-            if (userOp.nonce != nonce++) {
-                return NONCE_VALIDATION_FAILED;
-            }
-        }
+        return
+            _packValidationData(
+                ValidationData(aggregator, validAfter, validUntil)
+            );
+    }
 
-        if (
-            ECDSA.recover(
-                getUOPSignedHash(
-                    SignatureType(uint8(bytes1(userOp.signature[0:1]))),
-                    msg.sender,
-                    userOp
-                ),
-                userOp.signature[33:]
-            ) != owner
-        ) {
-            return uint256(bytes32(userOp.signature[1:33]));
-        } else {
-            return uint256(bytes32(userOp.signature[1:33]));
-        }
+    function entryPoint() public view virtual override returns (IEntryPoint) {
+        return ENTRYPOINT;
+    }
+
+    function getERC1271SignInfo() external view returns (bytes32, bytes32, bytes32) {
+        return (HASH_NAME, HASH_VERSION, ERC1271_TYPE_HASH);
     }
 
     function isValidSignature(
         bytes32 _hash,
         bytes calldata _signature
     ) external view returns (bytes4) {
-        if (isOwner(ECDSA.recover(_hash, _signature))) {
+        bytes32 domainSeparator = keccak256(abi.encode(
+            TYPE_HASH,
+            HASH_NAME,
+            HASH_VERSION,
+            bytes32(block.chainid),
+            address(this)
+        ));
+
+        bytes32 boundHash = keccak256(abi.encode(
+            ERC1271_TYPE_HASH,
+            _hash
+        ));
+
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            domainSeparator,
+            boundHash
+        ));
+
+        address signer = ECDSA.recover(digest, _signature);
+
+        if (isOwner(signer)) {
             return 0x1626ba7e;
         } else {
             return 0xffffffff;

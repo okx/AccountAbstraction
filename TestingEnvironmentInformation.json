@@ -1,0 +1,19 @@
+{
+  "bundler": "0x26ced4fc889d52210bd14af3bda90f7e36d10725",
+  "ContractOnChain": {
+    "SmartAccountV2": {
+      "ContractPath": "SmartAccountV2",
+      "ContractAddress": "0x9F5bb180aD1f86B4446F536cF08A3A80c5378a3b"
+    },
+    "AccountFactoryV2": {
+      "ContractPath": "AccountFactoryV2",
+      "ContractAddress": "0x943D544FcF002e13753F479796592561d6F29E18"
+    }
+  },
+  "ContractSetNewCode": {
+    "EntryPoint": {
+      "ContractPath": "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint",
+      "ContractAddress": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789"
+    }
+  }
+}

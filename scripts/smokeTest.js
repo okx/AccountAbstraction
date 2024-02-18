@@ -1,19 +1,15 @@
 const fs = require("fs");
 let { ethers } = require("hardhat");
 const { expect } = require("chai");
-const { send } = require("process");
 const Utils = require("./Utils.js");
 
 // Define the global variables
 let owner,
   sender,
   EntryPoint,
-  DefaultCallbackHandler,
-  SmartAccount,
-  SmartAccountProxyFactory,
-  PriceOracle,
-  TokenPaymaster,
-  TestToken;
+  SmartAccountV2,
+  AccountFactoryProxy,
+  TestAccountV2;
 
 async function instantiateContracts() {
   // Read the contents of the JSON file
@@ -24,197 +20,75 @@ async function instantiateContracts() {
 
   // Instantiate each contract with its corresponding factory
   EntryPoint = await ethers
-    .getContractFactory("contracts/core/EntryPoint.sol:EntryPoint")
-    .then((f) => f.attach(addresses["contracts/core/EntryPoint.sol:EntryPoint"]));
-  SmartAccount = await ethers
-    .getContractFactory("SmartAccount")
-    .then((f) => f.attach(addresses["SmartAccount"]));
-  SmartAccountProxyFactory = await ethers
-    .getContractFactory("SmartAccountProxyFactory")
-    .then((f) => f.attach(addresses["SmartAccountProxyFactory"]));
+    .getContractFactory("contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint")
+    .then((f) => f.attach(addresses["EntryPointV06"]));
+  SmartAccountV2 = await ethers
+    .getContractFactory("SmartAccountV2")
+    .then((f) => f.attach(addresses["SmartAccountV2"]));
+  AccountFactoryProxy = await ethers
+    .getContractFactory("AccountFactoryV2")
+    .then((f) => f.attach(addresses["AccountFactoryProxy"]));
 }
 
 async function createAA() {
   owner = await ethers.getSigner();
 
-  sender = await Utils.generateAccount({
-    owner: owner,
-    bundler: owner,
-    EntryPoint: EntryPoint,
-    SmartAccount: SmartAccount,
-    SmartAccountProxyFactory: SmartAccountProxyFactory,
-    random: 0,
-  });
+  TestAccountV2 = new Utils.SmartAccountV2({ ownerAddress: owner.address, random: 10001 })
 
-  const code = await ethers.provider.getCode(sender);
+  await TestAccountV2.initialize({
+    SmartAccount: SmartAccountV2,
+    SmartAccountProxyFactory: AccountFactoryProxy
+  })
 
-  if (code !== "0x") {
-    console.log("AA create success! " + sender);
-  } else {
-    console.log("AA create failed ");
-    process.exit(1);
-  }
+  await TestAccountV2.deploy(
+    {
+      owner: owner,
+      bundler: owner,
+      EntryPoint: EntryPoint,
+      SmartAccount: SmartAccountV2,
+      SmartAccountProxyFactory: AccountFactoryProxy,
+      sigType: 1,
+      callGasLimit: 100000,
+      verificationGasLimit: 1000000,
+      preVerificationGas: 0,
+    }
+  )
 }
 
 async function transferNativeToken() {
-  let callData = SmartAccount.interface.encodeFunctionData(
+  let callData = SmartAccountV2.interface.encodeFunctionData(
     "execTransactionFromEntrypoint",
     [owner.address, ethers.utils.parseEther("0.001"), "0x"]
   );
 
-  let userOp = await Utils.generateSignedUOP({
-    sender: sender,
+  let userOp = await TestAccountV2.generateSignedUOP({
+    sender: TestAccountV2.address,
     nonce: 1,
     initCode: "0x",
     callData: callData,
     paymasterAndData: "0x",
     owner: owner,
-    SmartAccount: SmartAccount,
+    SmartAccount: SmartAccountV2,
     EntryPoint: EntryPoint.address,
-    sigType: 0,
-    sigTime: 0,
+    sigType: 1,
+    callGasLimit: 300000,
+    verificationGasLimit: 1000000,
+    preVerificationGas: 0,
   });
 
-  let abi = [
-    {
-      inputs: [
-        {
-          components: [
-            {
-              internalType: "address",
-              name: "sender",
-              type: "address",
-            },
-            {
-              internalType: "uint256",
-              name: "nonce",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "initCode",
-              type: "bytes",
-            },
-            {
-              internalType: "bytes",
-              name: "callData",
-              type: "bytes",
-            },
-            {
-              internalType: "uint256",
-              name: "callGasLimit",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "verificationGasLimit",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "preVerificationGas",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "maxFeePerGas",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "maxPriorityFeePerGas",
-              type: "uint256",
-            },
-            {
-              internalType: "bytes",
-              name: "paymasterAndData",
-              type: "bytes",
-            },
-            {
-              internalType: "bytes",
-              name: "signature",
-              type: "bytes",
-            },
-          ],
-          internalType: "struct UserOperation[]",
-          name: "ops",
-          type: "tuple[]",
-        },
-      ],
-      name: "handleOps",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "bytes32",
-          name: "userOpHash",
-          type: "bytes32",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "sender",
-          type: "address",
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "paymaster",
-          type: "address",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "nonce",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "bool",
-          name: "success",
-          type: "bool",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "actualGasCost",
-          type: "uint256",
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "actualGasUsed",
-          type: "uint256",
-        },
-      ],
-      name: "UserOperationEvent",
-      type: "event",
-    },
-  ];
-
-  EntryPoint = new ethers.Contract(
-    EntryPoint.address,
-    abi,
-    hre.ethers.provider
-  );
 
   let gas = 2000000;
   if ((await hre.ethers.provider.getNetwork().chainId) == 42161) {
     gas = 30000000;
   }
-  let balanceOfsenderBefore = await ethers.provider.getBalance(sender);
-  let tx = await EntryPoint.connect(owner).handleOps([userOp], {
+  let balanceOfsenderBefore = await ethers.provider.getBalance(TestAccountV2.address);
+  let tx = await EntryPoint.connect(owner).handleOps([userOp], owner.address, {
     gasLimit: gas,
   });
   await tx.wait();
   console.log("handleOps tx hash", tx.hash);
 
-  let balanceOfsenderAfter = await ethers.provider.getBalance(sender);
+  let balanceOfsenderAfter = await ethers.provider.getBalance(TestAccountV2.address);
 
   console.log("balanceOfsenderBefore " + balanceOfsenderBefore);
   console.log("balanceOfsenderAfter " + balanceOfsenderAfter);
@@ -222,7 +96,7 @@ async function transferNativeToken() {
   await expect(tx).to.emit(EntryPoint, "UserOperationEvent");
 }
 
-async function main() {
+async function smokeTest() {
   await instantiateContracts();
 
   await createAA();
@@ -230,9 +104,10 @@ async function main() {
   await transferNativeToken();
 }
 
-main();
+smokeTest();
 
 module.exports = {
   createAA,
   transferNativeToken,
+  smokeTest
 };

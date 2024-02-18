@@ -3,8 +3,8 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../wallet/SmartAccount.sol";
-import "../wallet/SmartAccountProxy.sol";
+import "../wallet/v1/SmartAccount.sol";
+import "../wallet/v1/SmartAccountProxy.sol";
 
 /**
  * A wrapper factory contract to deploy SmartAccount as an Account-Abstraction wallet contract.
@@ -14,7 +14,7 @@ contract MockWrongDeployFactory is Ownable {
     event SafeSingletonSet(address safeSingleton, bool value);
 
     mapping(address => bool) public safeSingleton;
-    mapping(address => bool) public walletWhiteList;
+    // mapping(address => bool) public walletWhiteList;
 
     constructor(address _safeSingleton, address _owner) {
         safeSingleton[_safeSingleton] = true;
@@ -66,7 +66,7 @@ contract MockWrongDeployFactory is Ownable {
             )
         }
         require(address(proxy) != address(0), "Create2 call failed");
-        walletWhiteList[address(proxy)] = true;
+        // walletWhiteList[address(proxy)] = true;
     }
 
     /// @dev Allows to create new proxy contact and execute a message call to the new proxy within one transaction.

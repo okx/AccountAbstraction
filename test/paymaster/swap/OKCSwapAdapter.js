@@ -6,8 +6,29 @@ describe("OKCSwapAdapter", function () {
     async function deploy() {
         let [owner, signer] = await ethers.getSigners();
 
-        let EntryPointFactory = await ethers.getContractFactory("MockEntryPointL1");
-        let EntryPoint = await EntryPointFactory.deploy(owner.address);
+        let EntryPoin04Factory = await ethers.getContractFactory("MockEntryPointL1");
+        let EntryPoin06Factory = await ethers.getContractFactory(
+            "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+        );
+        let EntryPointV04 = await EntryPoin04Factory.deploy();
+        let EntryPointV06 = await EntryPoin06Factory.deploy();
+
+        /// change version to switch entrypoint
+        let version = 2;
+        let EntryPoint;
+
+        switch (version) {
+            case 1:
+                /// if test entryPointV04
+                EntryPoint = EntryPointV04;
+                break;
+            case 2:
+                /// if test entryPointV06 
+                EntryPoint = EntryPointV06;
+                break;
+            default:
+                EntryPoint = EntryPointV06;
+        }
 
         let MockChainlinkOracleFactory = await ethers.getContractFactory(
             "MockChainlinkOracle"
@@ -58,11 +79,11 @@ describe("OKCSwapAdapter", function () {
         );
         let TokenPaymaster = await TokenPaymasterFactory.deploy(
             signer.address,
-            owner.address,
-            EntryPoint.address
+            owner.address
         );
 
         await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address)
+        await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
         let MockOKCSwapRouterFactory = await ethers.getContractFactory(
             "contracts/mock/MockOKCSwap.sol:MockOKCSwapRouter"
@@ -180,6 +201,7 @@ describe("OKCSwapAdapter", function () {
 
             await expect(
                 TokenPaymaster.connect(owner).swapToNative(
+                    EntryPoint.address,
                     TestToken.address,
                     1000000,
                     0
@@ -221,6 +243,7 @@ describe("OKCSwapAdapter", function () {
 
             await expect(
                 TokenPaymaster.connect(owner).swapToNative(
+                    EntryPoint.address,
                     TestToken.address,
                     ethers.utils.parseEther("100000"),
                     0
@@ -257,6 +280,7 @@ describe("OKCSwapAdapter", function () {
             await TokenPaymaster.connect(owner).setSwapAdapter(SwapHelper.address);
 
             await TokenPaymaster.connect(owner).swapToNative(
+                EntryPoint.address,
                 TestToken.address,
                 1000000,
                 0

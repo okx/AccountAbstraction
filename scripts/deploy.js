@@ -1,674 +1,507 @@
 const fs = require("fs");
-
 const { ethers, network } = require("hardhat");
 const { expect } = require("chai");
 require("dotenv").config();
 
 let contractAddress = {},
-  salt,
-  owner,
-  chainId,
-  DeployFactory,
-  EntryPoint,
-  SwapHelper,
-  BundlerDepositHelper,
-  DefaultCallbackHandler,
-  SmartAccount,
-  SmartAccountProxyFactory,
-  OracleAdapter,
-  TokenPaymaster,
-  SimulateToken;
+    salt,
+    circleSalt,
+    owner,
+    chainId,
+    DeployFactory,
+    EntryPointV06,
+    SwapHelper,
+    BundlerDepositHelper,
+    DefaultCallbackHandler,
+    SmartAccountV2,
+    AccountFactoryProxy,
+    OracleAdapter,
+    TokenPaymaster,
+    FreeGasPaymaster,
+    CirclePaymaster,
+    SimulateToken;
 
 const DeployInformation = JSON.parse(fs.readFileSync("DeployInformation.json"));
 
 async function getDeployFactory() {
-  DeployFactory = await ethers
-    .getContractFactory("DeployFactory")
-    .then((f) =>
-      f.attach(
-        JSON.parse(fs.readFileSync("DeployInformation.json"))["DeployFactory"],
-      ),
-    );
+    DeployFactory = await ethers
+        .getContractFactory("DeployFactory")
+        .then((f) =>
+            f.attach(
+                JSON.parse(fs.readFileSync("DeployInformation.json"))["DeployFactory"],
+            ),
+        );
 
-  return DeployFactory;
+    return DeployFactory;
 }
 
 async function deployContractByDeployFactory(
-  DeployFactory,
-  contractFactory,
-  DeployInformation,
-  salt,
+    DeployFactory,
+    contractFactory,
+    DeployInformation,
+    salt,
 ) {
-  const initCode = ethers.utils.solidityPack(
-    ["bytes", "bytes"],
-    [ethers.utils.hexDataSlice(contractFactory.bytecode, 0), DeployInformation],
-  );
+    const initCode = ethers.utils.solidityPack(
+        ["bytes", "bytes"],
+        [ethers.utils.hexDataSlice(contractFactory.bytecode, 0), DeployInformation],
+    );
 
-  const address = await DeployFactory.getAddress(initCode, salt);
+    const address = await DeployFactory.getAddress(initCode, salt);
 
-  const code = await ethers.provider.getCode(address);
+    const code = await ethers.provider.getCode(address);
 
-  if (code !== "0x") {
+    if (code !== "0x") {
+        return address;
+    }
+
+    await DeployFactory.deploy(initCode, salt).then((tx) => tx.wait());
+
     return address;
-  }
-
-  await DeployFactory.deploy(initCode, salt).then((tx) => tx.wait());
-
-  return address;
 }
 
 async function deploy(
-  contractAddress,
-  DeployFactory,
-  contractName,
-  constructorType,
-  constructorArgs,
-  salt,
-) {
-  const contractFactory = await ethers.getContractFactory(contractName);
-
-  const DeployInformation = ethers.utils.defaultAbiCoder.encode(
+    contractAddress,
+    DeployFactory,
+    contractName,
     constructorType,
     constructorArgs,
-  );
+    salt,
+) {
+    const contractFactory = await ethers.getContractFactory(contractName);
 
-  const contract = await contractFactory.attach(
-    await deployContractByDeployFactory(
-      DeployFactory,
-      contractFactory,
-      DeployInformation,
-      salt,
-    ),
-  );
+    const DeployInformation = ethers.utils.defaultAbiCoder.encode(
+        constructorType,
+        constructorArgs,
+    );
+    const contract = await contractFactory.attach(
+        await deployContractByDeployFactory(
+            DeployFactory,
+            contractFactory,
+            DeployInformation,
+            salt,
+        ),
+    );
 
-  console.log(contractName + " " + contract.address);
-  contractAddress[contractName] = contract.address;
+    console.log(contractName + " " + contract.address);
+    contractAddress[contractName] = contract.address;
 
-  return contract;
+    return contract;
 }
 
+async function instantiateContracts() {
+    EntryPointV06 = await ethers
+        .getContractFactory("contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint")
+        .then((f) => f.attach(DeployInformation["OfficialEntryPointV06"]));
+    contractAddress["EntryPointV06"] = EntryPointV06.address;
+
+    console.log("EntryPointV06" + " " + EntryPointV06.address);
+
+    OracleAdapter = await ethers
+        .getContractFactory(DeployInformation["OracleAdapter"][chainId]["contractType"])
+        .then((f) => f.attach(DeployInformation["OracleAdapter"][chainId]["contractAddress"]));
+
+    console.log("OracleAdapter" + " " + OracleAdapter.address);
+
+    SwapHelper = await ethers
+        .getContractFactory(DeployInformation["SwapHelper"][chainId]["contractType"])
+        .then((f) => f.attach(DeployInformation["SwapHelper"][chainId]["contractAddress"]));
+    console.log("SwapHelper" + " " + SwapHelper.address);
+}
+
+
 async function deployCoreContract() {
-  EntryPoint = await deploy(
-    contractAddress,
-    DeployFactory,
-    "contracts/core/EntryPoint.sol:EntryPoint",
-    ["address"],
-    [DeployInformation["EntryPoint"]["owner"]],
-    salt,
-  );
 
-  TokenPaymaster = await deploy(
-    contractAddress,
-    DeployFactory,
-    "TokenPaymaster",
-    ["address", "address", "address"],
-    [
-      DeployInformation["TokenPaymaster"]["verifyingSigner"],
-      DeployInformation["TokenPaymaster"]["owner"],
-      EntryPoint.address,
-    ],
-    salt,
-  );
+    Validations = await deploy(
+        contractAddress,
+        DeployFactory,
+        "Validations",
+        ["address"],
+        [DeployInformation["Validations"]["owner"]],
+        salt,
+    );
 
-  FreeGasPaymaster = await deploy(
-    contractAddress,
-    DeployFactory,
-    "FreeGasPaymaster",
-    ["address", "address", "address"],
-    [
-      DeployInformation["FreeGasPaymaster"]["verifyingSigner"],
-      DeployInformation["FreeGasPaymaster"]["owner"],
-      EntryPoint.address,
-    ],
-    salt,
-  );
 
-  DefaultCallbackHandler = await deploy(
-    contractAddress,
-    DeployFactory,
-    "DefaultCallbackHandler",
-    [],
-    [],
-    salt,
-  );
+    BundlerDepositHelper = await deploy(
+        contractAddress,
+        DeployFactory,
+        "BundlerDepositHelper",
+        ["address", "address"],
+        [DeployInformation["BundlerDepositHelper"]["owner"], Validations.address],
+        salt,
+    );
 
-  SmartAccount = await deploy(
-    contractAddress,
-    DeployFactory,
-    "SmartAccount",
-    ["address", "address", "string", "string"],
-    [
-      EntryPoint.address,
-      DefaultCallbackHandler.address,
-      DeployInformation["SmartAccount"]["name"],
-      DeployInformation["SmartAccount"]["version"],
-    ],
-    salt,
-  );
+    TokenPaymaster = await deploy(
+        contractAddress,
+        DeployFactory,
+        "TokenPaymaster",
+        ["address", "address"],
+        [
+            DeployInformation["TokenPaymaster"]["verifyingSigner"],
+            DeployInformation["TokenPaymaster"]["owner"]
+        ],
+        salt,
+    );
 
-  SmartAccountProxyFactory = await deploy(
-    contractAddress,
-    DeployFactory,
-    "SmartAccountProxyFactory",
-    ["address", "address"],
-    [
-      SmartAccount.address,
-      DeployInformation["SmartAccountProxyFactory"]["owner"],
-    ],
-    salt,
-  );
+    FreeGasPaymaster = await deploy(
+        contractAddress,
+        DeployFactory,
+        "FreeGasPaymaster",
+        ["address", "address"],
+        [
+            DeployInformation["FreeGasPaymaster"]["verifyingSigner"],
+            DeployInformation["FreeGasPaymaster"]["owner"]
+        ],
+        salt,
+    );
 
-  SmartAccountInitCode = await deploy(
-    contractAddress,
-    DeployFactory,
-    "SmartAccountInitCode",
-    [],
-    [],
-    salt,
-  );
+
+    CirclePaymaster = await deploy(
+        contractAddress,
+        DeployFactory,
+        "FreeGasPaymaster",
+        ["address", "address"],
+        [
+            DeployInformation["CirclePaymaster"]["verifyingSigner"],
+            DeployInformation["CirclePaymaster"]["owner"]
+        ],
+        circleSalt,
+    );
+    console.log("CirclePaymaster address is:", CirclePaymaster.address);
+
+    DefaultCallbackHandler = await deploy(
+        contractAddress,
+        DeployFactory,
+        "contracts/wallet/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler",
+        [],
+        [],
+        salt,
+    );
+
+
+    SmartAccountV2 = await deploy(
+        contractAddress,
+        DeployFactory,
+        "SmartAccountV2",
+        ["address", "address", "address", "string", "string"],
+        [
+            EntryPointV06.address,
+            DefaultCallbackHandler.address,
+            Validations.address,
+            DeployInformation["SmartAccountV2"]["name"],
+            DeployInformation["SmartAccountV2"]["version"],
+        ],
+        salt,
+    );
+
+    AccountFactoryV2 = await deploy(
+        contractAddress,
+        DeployFactory,
+        "AccountFactoryV2",
+        [],
+        [],
+        salt,
+    );
+
+    AccountFactoryProxy = await deploy(
+        contractAddress,
+        DeployFactory,
+        "AccountFactoryProxy",
+        ["address", "address", "address"],
+        [AccountFactoryV2.address, owner.address, SmartAccountV2.address],
+        salt,
+    );
+
 }
 
 async function deployHelperContract() {
-  if (chainId == 66) {
-    OracleAdapter = await deploy(
-      contractAddress,
-      DeployFactory,
-      DeployInformation["OracleAdapter"][chainId]["contractType"],
-      ["address", "address"],
-      [
-        DeployInformation["OracleAdapter"]["owner"],
-        DeployInformation["OracleAdapter"][chainId]["oracleAddress"],
-      ],
-      salt,
+    SimulateToken = await deploy(
+        contractAddress,
+        DeployFactory,
+        "SimulateToken",
+        ["address", "uint256"],
+        [EntryPointV06.address, ethers.constants.MaxUint256],
+        salt,
     );
-  } else {
-    OracleAdapter = await deploy(
-      contractAddress,
-      DeployFactory,
-      DeployInformation["OracleAdapter"][chainId]["contractType"],
-      ["address"],
-      [DeployInformation["OracleAdapter"]["owner"]],
-      salt,
-    );
-  }
-
-  SwapHelper = await deploy(
-    contractAddress,
-    DeployFactory,
-    DeployInformation["SwapHelper"][chainId]["contractType"],
-    ["address", "address"],
-    [
-      DeployInformation["SwapHelper"][chainId]["swapRouter"],
-      DeployInformation["SwapHelper"]["owner"],
-    ],
-    salt,
-  );
-
-  UserOperationHelper = await deploy(
-    contractAddress,
-    DeployFactory,
-    "UserOperationHelper",
-    ["address", "address", "address"],
-    [
-      TokenPaymaster.address,
-      EntryPoint.address,
-      DeployInformation["UserOperationHelper"]["owner"],
-    ],
-    salt,
-  );
-
-  SimulateToken = await deploy(
-    contractAddress,
-    DeployFactory,
-    "SimulateToken",
-    ["address", "uint256"],
-    [UserOperationHelper.address, ethers.constants.MaxUint256],
-    salt,
-  );
-
-  BundlerDepositHelper = await deploy(
-    contractAddress,
-    DeployFactory,
-    "BundlerDepositHelper",
-    ["address"],
-    [DeployInformation["BundlerDepositHelper"]["owner"]],
-    salt,
-  );
 }
 
-async function CheckConfig() {
-  await expect((await EntryPoint.owner()).toLowerCase()).to.equal(
-    DeployInformation["EntryPoint"]["owner"].toLowerCase(),
-  );
 
-  await expect((await OracleAdapter.owner()).toLowerCase()).to.equal(
-    DeployInformation["OracleAdapter"]["owner"].toLowerCase(),
-  );
+async function setAccountFactoryProxyConfig() {
 
-  await expect((await SwapHelper.owner()).toLowerCase()).to.equal(
-    DeployInformation["SwapHelper"]["owner"].toLowerCase(),
-  );
+    AccountFactoryProxy = await ethers
+        .getContractFactory("AccountFactoryV2")
+        .then((f) => f.attach(AccountFactoryProxy.address));
 
-  await expect((await TokenPaymaster.owner()).toLowerCase()).to.equal(
-    DeployInformation["TokenPaymaster"]["owner"].toLowerCase(),
-  );
 
-  await expect((await TokenPaymaster.verifyingSigner()).toLowerCase()).to.equal(
-    DeployInformation["TokenPaymaster"]["verifyingSigner"].toLowerCase(),
-  );
+    let tx = await AccountFactoryProxy.connect(owner)
+        .setSafeSingleton(SmartAccountV2.address, true);
 
-  await expect(
-    (await TokenPaymaster.supportedEntryPoint()).toLowerCase(),
-  ).to.equal(EntryPoint.address.toLowerCase());
+    await tx.wait();
 
-  await expect((await FreeGasPaymaster.owner()).toLowerCase()).to.equal(
-    DeployInformation["FreeGasPaymaster"]["owner"].toLowerCase(),
-  );
-
-  await expect(
-    (await FreeGasPaymaster.verifyingSigner()).toLowerCase(),
-  ).to.equal(
-    DeployInformation["FreeGasPaymaster"]["verifyingSigner"].toLowerCase(),
-  );
-
-  await expect(
-    (await FreeGasPaymaster.supportedEntryPoint()).toLowerCase(),
-  ).to.equal(EntryPoint.address.toLowerCase());
-
-  await expect((await SmartAccount.EntryPoint()).toLowerCase()).to.equal(
-    EntryPoint.address.toLowerCase(),
-  );
-
-  await expect((await SmartAccount.FallbackHandler()).toLowerCase()).to.equal(
-    DefaultCallbackHandler.address.toLowerCase(),
-  );
-
-  await expect(
-    await SmartAccountProxyFactory.safeSingleton(SmartAccount.address),
-  ).to.equal(true);
-
-  await expect((await SmartAccountProxyFactory.owner()).toLowerCase()).to.equal(
-    DeployInformation["SmartAccountProxyFactory"]["owner"].toLowerCase(),
-  );
-
-  await expect(
-    await UserOperationHelper.tokenPaymasters(TokenPaymaster.address),
-  ).to.equal(true);
-
-  await expect(
-    await UserOperationHelper.entryPoints(EntryPoint.address),
-  ).to.equal(true);
+    console.log("setAccountFactoryProxyConfig", tx.hash);
 }
 
-async function setEntryPointConfig() {
-  await EntryPoint.connect(owner)
-    .setWalletProxyFactoryWhitelist(SmartAccountProxyFactory.address)
-    .then((tx) => tx.wait());
 
-  const bundlers = DeployInformation["EntryPoint"]["bundlers"];
+async function setValidationsConfig() {
+    await Validations.connect(owner)
+        .setWalletProxyFactoryWhitelist(AccountFactoryProxy.address)
+        .then((tx) => tx.wait());
 
-  for (let index = 0; index < bundlers.length; index++) {
-    if (!(await EntryPoint.officialBundlerWhiteList(bundlers[index]))) {
-      let tx = await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
-        bundlers[index],
-        true,
-      );
-      await tx.wait();
+    const bundlers = DeployInformation["Validations"]["bundlers"];
 
-      console.log("setBundlerOfficialWhitelist", tx.hash);
-      console.log("bundler setted " + bundlers[index]);
-    }
-  }
+    const allowed = new Array(bundlers.length).fill(true);
+
+    const tx = await Validations.connect(owner).setBundlerOfficialWhitelistBatch(
+        bundlers,
+        allowed
+    );
+
+    await tx.wait();
+
+    console.log("Batch setBundlerOfficialWhitelist completed.");
 }
 
 async function setTokenPaymasterOracleConfig() {
-  let tx = await TokenPaymaster.connect(owner).setPriceOracle(
-    OracleAdapter.address,
-  );
-  await tx.wait();
+    let tx = await TokenPaymaster.connect(owner).setPriceOracle(
+        OracleAdapter.address,
+    );
+    await tx.wait();
 
-  console.log("setPriceOracle", tx.hash);
+    console.log("setPriceOracle", tx.hash);
 }
 
 async function setTokenPaymasterSwapHelperConfig() {
-  let tx = await TokenPaymaster.connect(owner).setSwapAdapter(
-    SwapHelper.address,
-  );
-  await tx.wait();
+    let tx = await TokenPaymaster.connect(owner).setSwapAdapter(
+        SwapHelper.address,
+    );
+    await tx.wait();
 
-  console.log("setSwapAdapter", tx.hash);
+    console.log("setSwapAdapter", tx.hash);
 }
 
 async function setTokenPaymasterPriceConfig() {
-  let tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
-    DeployInformation["USDT"][chainId]["address"],
-    ethers.utils.parseUnits(
-      DeployInformation["USDT"][chainId]["maxPrice"],
-      Number(DeployInformation["USDT"][chainId]["decimal"]),
-    ),
-  );
-  await tx.wait();
-  console.log("setTokenPriceLimitMax USDT", tx.hash);
+    let tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
+        DeployInformation["USDT"][chainId]["address"],
+        ethers.utils.parseUnits(
+            DeployInformation["USDT"][chainId]["maxPrice"],
+            Number(DeployInformation["USDT"][chainId]["decimal"]),
+        ),
+    );
+    await tx.wait();
+    console.log("setTokenPriceLimitMax USDT", tx.hash);
 
-  tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
-    DeployInformation["USDT"][chainId]["address"],
-    ethers.utils.parseUnits(
-      DeployInformation["USDT"][chainId]["minPrice"],
-      Number(DeployInformation["USDT"][chainId]["decimal"]),
-    ),
-  );
-  await tx.wait();
-  console.log("setTokenPriceLimitMin USDT", tx.hash);
+    tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
+        DeployInformation["USDT"][chainId]["address"],
+        ethers.utils.parseUnits(
+            DeployInformation["USDT"][chainId]["minPrice"],
+            Number(DeployInformation["USDT"][chainId]["decimal"]),
+        ),
+    );
+    await tx.wait();
+    console.log("setTokenPriceLimitMin USDT", tx.hash);
 
-  tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
-    DeployInformation["USDC"][chainId]["address"],
-    ethers.utils.parseUnits(
-      DeployInformation["USDC"][chainId]["maxPrice"],
-      Number(DeployInformation["USDC"][chainId]["decimal"]),
-    ),
-  );
-  await tx.wait();
-  console.log("setTokenPriceLimitMax USDC", tx.hash);
+    tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
+        DeployInformation["USDC"][chainId]["address"],
+        ethers.utils.parseUnits(
+            DeployInformation["USDC"][chainId]["maxPrice"],
+            Number(DeployInformation["USDC"][chainId]["decimal"]),
+        ),
+    );
+    await tx.wait();
+    console.log("setTokenPriceLimitMax USDC", tx.hash);
 
-  tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
-    DeployInformation["USDC"][chainId]["address"],
-    ethers.utils.parseUnits(
-      DeployInformation["USDC"][chainId]["minPrice"],
-      Number(DeployInformation["USDC"][chainId]["decimal"]),
-    ),
-  );
-  await tx.wait();
-  console.log("setTokenPriceLimitMin USDC", tx.hash);
+    tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
+        DeployInformation["USDC"][chainId]["address"],
+        ethers.utils.parseUnits(
+            DeployInformation["USDC"][chainId]["minPrice"],
+            Number(DeployInformation["USDC"][chainId]["decimal"]),
+        ),
+    );
+    await tx.wait();
+    console.log("setTokenPriceLimitMin USDC", tx.hash);
 
+    if (chainId == 10 || chainId == 42161) {
+        tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
+            DeployInformation["USDC.e"][chainId]["address"],
+            ethers.utils.parseUnits(
+                DeployInformation["USDC.e"][chainId]["maxPrice"],
+                Number(DeployInformation["USDC.e"][chainId]["decimal"]),
+            ),
+        );
+        await tx.wait();
+        console.log("setTokenPriceLimitMax USDC.e", tx.hash);
+
+        tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMin(
+            DeployInformation["USDC.e"][chainId]["address"],
+            ethers.utils.parseUnits(
+                DeployInformation["USDC.e"][chainId]["minPrice"],
+                Number(DeployInformation["USDC.e"][chainId]["decimal"]),
+            ),
+        );
+        await tx.wait();
+        console.log("setTokenPriceLimitMin USDC.e", tx.hash);
+    }
+
+
+    tx = await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
+        SimulateToken.address,
+        ethers.constants.MaxUint256,
+    );
+    await tx.wait();
+    console.log("setTokenPriceLimitMax SimulateToken", tx.hash);
 }
 
-async function setOracleConfig() {
-  if (chainId == 66) {
-    await setEXOracleAdapterConfig(owner);
-  } else {
-    await setChainlinkOracleAdapterConfig(owner);
-  }
-}
-
-async function setChainlinkOracleAdapterConfig() {
-  let tx = await OracleAdapter.connect(owner).setDecimals(
-    await OracleAdapter.NATIVE_TOKEN(),
-    18,
-  );
-  await tx.wait();
-  console.log("setDecimals Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    DeployInformation["USDT"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDTPriceFeed"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed USDT", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    DeployInformation["USDC"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDCPriceFeed"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed USDC", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    await OracleAdapter.NATIVE_TOKEN(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenPriceFeed"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    await SwapHelper.nativeToken(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenPriceFeed"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed Wraped Native", tx.hash);
-}
-
-async function setEXOracleAdapterConfig() {
-  let tx = await OracleAdapter.connect(owner).setDecimals(
-    await OracleAdapter.NATIVE_TOKEN(),
-    18,
-  );
-  await tx.wait();
-  console.log("setDecimals Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    DeployInformation["USDT"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["dataSorce"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed USDT", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setOracleDecimals(
-    DeployInformation["USDT"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDTOracleDecimals"],
-  );
-  await tx.wait();
-  console.log("setOracleDecimals USDT", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceType(
-    DeployInformation["USDT"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDTOracleDataType"],
-  );
-  await tx.wait();
-  console.log("setPriceType USDT", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    DeployInformation["USDC"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["dataSorce"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed USDC", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setOracleDecimals(
-    DeployInformation["USDC"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDTOracleDecimals"],
-  );
-  await tx.wait();
-  console.log("setOracleDecimals USDC", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceType(
-    DeployInformation["USDC"][chainId]["address"],
-    DeployInformation["OracleAdapter"][chainId]["USDTOracleDataType"],
-  );
-  await tx.wait();
-  console.log("setPriceType USDC", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    await OracleAdapter.NATIVE_TOKEN(),
-    DeployInformation["OracleAdapter"][chainId]["dataSorce"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setOracleDecimals(
-    await OracleAdapter.NATIVE_TOKEN(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenOracleDecimals"],
-  );
-  await tx.wait();
-  console.log("setOracleDecimals Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceType(
-    await OracleAdapter.NATIVE_TOKEN(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenOracleDataType"],
-  );
-  await tx.wait();
-  console.log("setPriceType Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceFeed(
-    await SwapHelper.nativeToken(),
-    DeployInformation["OracleAdapter"][chainId]["dataSorce"],
-  );
-  await tx.wait();
-  console.log("setPriceFeed Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setOracleDecimals(
-    await SwapHelper.nativeToken(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenOracleDecimals"],
-  );
-  await tx.wait();
-  console.log("setOracleDecimals Native Token", tx.hash);
-
-  tx = await OracleAdapter.connect(owner).setPriceType(
-    await SwapHelper.nativeToken(),
-    DeployInformation["OracleAdapter"][chainId]["NativeTokenOracleDataType"],
-  );
-  await tx.wait();
-  console.log("setPriceType Native Token", tx.hash);
-}
-
-async function setFreeGasPaymasterWhiteListConfig() {
-  let tx = await FreeGasPaymaster.connect(owner).addToWhitelist(
-    DeployInformation["FreeGasPaymaster"]["whiteList"],
-  );
-  await tx.wait();
-  console.log("addToWhitelist FreGasPaymaster", tx.hash);
-}
 
 async function setTokenPaymasterWhitListConfig() {
-  let tx = await TokenPaymaster.connect(owner).addToWhitelist(
-    DeployInformation["TokenPaymaster"]["whiteList"],
-  );
-  await tx.wait();
-  console.log("addToWhitelist TokenPaymaster", tx.hash);
+    let tx = await TokenPaymaster.connect(owner).addToWhitelist(
+        DeployInformation["TokenPaymaster"]["whiteList"],
+    );
+    await tx.wait();
+    console.log("addToWhitelist TokenPaymaster", tx.hash);
 }
+
 
 async function setBundlerDepositHelperConfig() {
-  let tx = await BundlerDepositHelper.connect(owner).setValidEntryPoint(
-    EntryPoint.address,
-    true,
-  );
-  await tx.wait();
-  console.log("setValidEntryPoint BundlerDepositHelper", tx.hash);
+    let tx = await BundlerDepositHelper.connect(owner).setValidEntryPoint(
+        EntryPointV06.address,
+        true,
+    );
+    await tx.wait();
+    console.log("setValidEntryPoint BundlerDepositHelper", tx.hash);
 }
 
-async function setSwapHelperConfig() {
-  if (
-    DeployInformation["SwapHelper"][chainId]["contractType"] !=
-    "UniSwapV3Adapter"
-  ) {
-    let tx = await SwapHelper.connect(owner).setPath(
-      DeployInformation["USDT"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["paths"]["USDT"],
-    );
-    await tx.wait();
-    console.log("setPath USDT", tx.hash);
+async function setTokenPaymasterEntryPointConfig() {
+    let tx = await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPointV06.address);
 
-    tx = await SwapHelper.connect(owner).setPath(
-      DeployInformation["USDC"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["paths"]["USDC"],
-    );
     await tx.wait();
-    console.log("setPath USDC", tx.hash);
-  } else {
-
-    let tx = await SwapHelper.connect(owner).setPoolFee(
-      DeployInformation["USDT"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["poolFee"]["USDT"],
-    );
-    await tx.wait();
-    console.log("setPoolFee USDT", tx.hash);
-
-    tx = await SwapHelper.connect(owner).setPoolFee(
-      DeployInformation["USDC"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["poolFee"]["USDC"],
-    );
-    await tx.wait();
-    console.log("setPoolFee USDC", tx.hash);
-
-  }
-
-  if (
-    DeployInformation["SwapHelper"][chainId]["contractType"] ==
-    "TradeJoeV2Adapter"
-  ) {
-    let tx = await SwapHelper.connect(owner).setAirBinStep(
-      DeployInformation["USDT"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["airBinSteps"]["USDT"],
-    );
-    await tx.wait();
-    console.log("setAirBinStep USDT", tx.hash);
-
-    tx = await SwapHelper.connect(owner).setAirBinStep(
-      DeployInformation["USDC"][chainId]["address"],
-      DeployInformation["SwapHelper"][chainId]["airBinSteps"]["USDC"],
-    );
-    await tx.wait();
-    console.log("setAirBinStep USDC", tx.hash);
-  }
+    console.log("set TokenPaymaster ValidEntryPoint EntryPoint", tx.hash);
 }
+
+
+
+async function setFreeGasPaymasterWhiteListConfig() {
+    let tx = await FreeGasPaymaster.connect(owner).addToWhitelist(
+        DeployInformation["FreeGasPaymaster"]["whiteList"],
+    );
+    await tx.wait();
+    console.log("addToWhitelist FreeGasPaymaster", tx.hash);
+}
+
+
+async function setFreeGasPaymasterEntryPointConfig() {
+    let tx = await FreeGasPaymaster.connect(owner).addSupportedEntryPoint(EntryPointV06.address);
+
+    await tx.wait();
+    console.log("set FreeGasPaymaster ValidEntryPoint EntryPoint", tx.hash);
+}
+
 
 async function setFreeGasPaymasterConfig() {
-  await setFreeGasPaymasterWhiteListConfig();
+    await setFreeGasPaymasterWhiteListConfig();
+    await setFreeGasPaymasterEntryPointConfig();
 }
+
+
+async function setCirclePaymasterWhiteListConfig() {
+    let tx = await CirclePaymaster.connect(owner).addToWhitelist(
+        DeployInformation["CirclePaymaster"]["whiteList"],
+    );
+    await tx.wait();
+    console.log("addToWhitelist CirclePaymaster", tx.hash);
+}
+
+async function setCirclePaymasterEntryPointConfig() {
+    let tx = await CirclePaymaster.connect(owner).addSupportedEntryPoint(EntryPointV06.address);
+
+    await tx.wait();
+    console.log("set CirclePaymaster ValidEntryPoint EntryPoint", tx.hash);
+}
+
+
+async function setCirclePaymasterConfig() {
+    await setCirclePaymasterWhiteListConfig();
+    await setCirclePaymasterEntryPointConfig();
+}
+
 
 async function setTokenPaymasterConfig() {
-  await setTokenPaymasterOracleConfig();
-  await setTokenPaymasterPriceConfig();
-  await setTokenPaymasterSwapHelperConfig();
-  await setTokenPaymasterWhitListConfig();
+    await setTokenPaymasterOracleConfig();
+    await setTokenPaymasterPriceConfig();
+    await setTokenPaymasterSwapHelperConfig();
+    await setTokenPaymasterWhitListConfig();
+    await setTokenPaymasterEntryPointConfig();
 }
 
-async function deployAllContract() {
-  DeployFactory = await getDeployFactory();
-  await deployCoreContract();
-  await deployHelperContract();
-}
 
 async function setPaymasterConfig() {
-  await setTokenPaymasterConfig();
-  await setFreeGasPaymasterConfig();
+    await setTokenPaymasterConfig();
+    await setFreeGasPaymasterConfig();
+    await setCirclePaymasterConfig();
 }
 
 async function setAllConfig() {
-  await setEntryPointConfig();
-  await setPaymasterConfig();
-  await setOracleConfig();
-  await setSwapHelperConfig();
-  await setBundlerDepositHelperConfig();
+    await setAccountFactoryProxyConfig()
+    await setValidationsConfig();
+    await setPaymasterConfig();
+    await setBundlerDepositHelperConfig();
 }
 
+async function deployAllContract() {
+    DeployFactory = await getDeployFactory();
+    await deployCoreContract();
+    await deployHelperContract();
+}
+
+
+
+
+
+
+
+
 async function main() {
-  if ((await hre.ethers.provider.getNetwork()).chainId.toString() == 31337) {
-    ME = "0x794b93902449c524c3158f9e101204ecb2057f2e";
-    owner = await network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ME],
-    });
+    if ((await hre.ethers.provider.getNetwork()).chainId.toString() == 31337) {
+        // ME = "0x794b93902449c524c3158f9e101204ecb2057f2e";
+        // owner = await network.provider.request({
+        //     method: "hardhat_impersonateAccount",
+        //     params: [ME],
+        // });
 
-    await network.provider.send("hardhat_setBalance", [
-      ME,
-      "0x1000000000000000000000000",
-    ]);
+        // await network.provider.send("hardhat_setBalance", [
+        //     ME,
+        //     "0x1000000000000000000000000",
+        // ]);
 
-    await network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [ME],
-    });
+        // await network.provider.request({
+        //     method: "hardhat_impersonateAccount",
+        //     params: [ME],
+        // });
 
-    owner = await ethers.getSigner(ME);
-    chainId = 56;
-  } else {
-    owner = await ethers.getSigner();
-    chainId = (await hre.ethers.provider.getNetwork()).chainId.toString();
-  }
+        // owner = await ethers.getSigner(ME);
+        owner = await ethers.getSigner();
+        chainId = 43114;
+    } else {
+        owner = await ethers.getSigner();
+        chainId = (await hre.ethers.provider.getNetwork()).chainId.toString();
+    }
 
-  salt = DeployInformation["salt"];
 
-  console.log("ownerAddress", owner.address);
-  console.log("chainID", chainId);
+    salt = DeployInformation["salt"];
+    circleSalt = DeployInformation["circleSalt"];
 
-  await deployAllContract();
-  await CheckConfig();
-  await setAllConfig();
+    console.log("ownerAddress", owner.address);
+    console.log("chainID", chainId);
 
-  fs.writeFileSync(
-    "ContractAddress.json",
-    JSON.stringify(contractAddress, null, 2),
-  );
+    await instantiateContracts();
+    await deployAllContract();
+    await setAllConfig();
+
+    fs.writeFileSync(
+        "ContractAddress.json",
+        JSON.stringify(contractAddress, null, 2),
+    );
+
 }
 
 main();
+
+

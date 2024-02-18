@@ -3,8 +3,8 @@ node_modules
 coverage
 .coverage.json
 ContractAddress.json
-typechain
-typechain-types
+types
+abi
 .DS_Store
 
 # Hardhat files
@@ -12,5 +12,9 @@ cache
 artifacts
 scripts/*
 !scripts/deploy.js
+!scripts/deploySmartAccountV2.0.1.js
 !scripts/smokeTest.js
 !scripts/Utils.js
+!scripts/createTestingEnvironment.js
+!scripts/testInTestingEnvironment.js
+typechain

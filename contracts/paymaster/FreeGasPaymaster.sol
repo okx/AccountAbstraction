@@ -8,33 +8,58 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IFreeGasPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
-import "../interfaces/IEntryPoint.sol";
+import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
+import "./SupportedEntryPointLib.sol";
 
 contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     using UserOperationLib for UserOperation;
+    using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     uint256 internal constant SIG_VALIDATION_FAILED = 1;
     address public immutable verifyingSigner;
     address public immutable ADDRESS_THIS;
-    address public immutable supportedEntryPoint;
+    SupportedEntryPoint supportedEntryPoint;
     mapping(address => bool) public whitelist;
 
-    constructor(
-        address _verifyingSigner,
-        address _owner,
-        address _supportedEntryPoint
-    ) {
+    constructor(address _verifyingSigner, address _owner) {
         verifyingSigner = _verifyingSigner;
         _transferOwnership(_owner);
-        supportedEntryPoint = _supportedEntryPoint;
         ADDRESS_THIS = address(this);
+    }
+
+    modifier validEntryPoint(address entrypoint) {
+        require(
+            supportedEntryPoint.isSupportedEntryPoint(entrypoint),
+            "Not from supported entrypoint"
+        );
+        _;
     }
 
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
         _;
+    }
+
+    /// @dev add entryPoint to supported list;
+    /// @param entrypoint entryPoint contract address
+    function addSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.addEntryPointToList(entrypoint);
+    }
+
+    /// @dev remove entryPoint from supported list;
+    /// @param entrypoint entryPoint contract address
+    function removeSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.removeEntryPointToList(entrypoint);
+    }
+
+    /// @dev check entrypoint
+    /// @param entrypoint entryPoint contract address
+    function isSupportedEntryPoint(
+        address entrypoint
+    ) external view returns (bool) {
+        return supportedEntryPoint.isSupportedEntryPoint(entrypoint);
     }
 
     function addToWhitelist(address[] calldata addresses) external onlyOwner {
@@ -63,10 +88,16 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
     }
 
     function withdrawDepositNativeToken(
+        address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) {
-        IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
+    )
+        public
+        onlyOwner
+        onlyWhitelisted(withdrawAddress)
+        validEntryPoint(entryPoint)
+    {
+        IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
 
@@ -116,7 +147,7 @@ contract FreeGasPaymaster is IFreeGasPaymaster, Ownable {
         UserOperation calldata userOp,
         bytes32,
         uint256
-    ) external view override returns (bytes memory, uint256) {
+    ) external view returns (bytes memory, uint256) {
         uint256 sigTime = uint256(bytes32(userOp.paymasterAndData[20:52]));
 
         bool sigValidate = verifyingSigner !=

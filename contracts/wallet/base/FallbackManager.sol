@@ -34,6 +34,7 @@ contract FallbackManager is SelfAuthorized {
     }
 
     function setFallbackHandler(address handler, bool delegate) internal {
+        require(handler != address(this), "handler illegal");
         bytes32 slot = FALLBACK_HANDLER_STORAGE_SLOT;
         // solhint-disable-next-line no-inline-assembly
         assembly {

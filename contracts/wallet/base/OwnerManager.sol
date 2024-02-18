@@ -6,7 +6,7 @@ contract OwnerManager {
 
     address internal owner;
 
-    uint256 public nonce;
+    uint256 private nonce;
 
     modifier onlyOwner() {
         require(isOwner(msg.sender), "not call by owner");

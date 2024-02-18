@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/ISwapAdapter.sol";
-import "../../interfaces/IPriceOracle.sol";
 
 // swapHelper is a helper contract that is used to swap tokens to native via uniV2Router
 contract UniSwapV2Adapter is ISwapAdapter, Ownable {
