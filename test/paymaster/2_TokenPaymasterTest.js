@@ -7,7 +7,35 @@ describe("TokenPaymaster", function () {
     let [owner, signer, alice, entryPoint] = await ethers.getSigners();
 
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
-    let entryPointContract = await MockEntryPointL1.deploy(owner.address);
+    let EntryPointV06 = await ethers.getContractFactory(
+      "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+    );
+    let entryPointContractSimulate = await MockEntryPointL1.deploy();
+    let entryPointContractV04 = await MockEntryPointL1.deploy();
+    let entryPointContractV06 = await EntryPointV06.deploy();
+
+
+    /// change version to switch entrypoint
+    let version = 2;
+    let entryPointContract;
+
+    switch (version) {
+      case 0:
+        /// if test entryPointSimulate;
+        entryPointContract = entryPointContractSimulate;
+        break;
+      case 1:
+        /// if test entryPointV04
+        entryPointContract = entryPointContractV04;
+        break;
+      case 2:
+        /// if test entryPointV06 
+        entryPointContract = entryPointContractV06;
+        break;
+      default:
+        entryPointContract = entryPointContractV06;
+    }
+
     let MockChainlinkOracleFactory = await ethers.getContractFactory(
       "MockChainlinkOracle",
     );
@@ -38,10 +66,9 @@ describe("TokenPaymaster", function () {
     );
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPoint.address,
+      owner.address
     );
-
+    await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address);
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address);
 
     await priceOracle
@@ -60,7 +87,7 @@ describe("TokenPaymaster", function () {
       .setDecimals(await priceOracle.NATIVE_TOKEN(), 18);
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper",
+      "UserOperationHelper"
     );
     let userOpHelper = await UserOpHelperFactory.deploy(
       tokenPaymaster.address,
@@ -70,13 +97,13 @@ describe("TokenPaymaster", function () {
 
     let tokenPaymasterWithEntryPoint = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPointContract.address,
+      owner.address
     );
 
     await tokenPaymasterWithEntryPoint
       .connect(owner)
       .setPriceOracle(priceOracle.address);
+    await tokenPaymasterWithEntryPoint.connect(owner).addSupportedEntryPoint(entryPointContract.address);
 
     return {
       entryPoint,
@@ -106,8 +133,8 @@ describe("TokenPaymaster", function () {
       let defaultPriceOracle = await tokenPaymaster.priceOracle();
       await expect(defaultPriceOracle).to.equal(priceOracle.address);
 
-      let defaultEntryPoint = await tokenPaymaster.supportedEntryPoint();
-      await expect(defaultEntryPoint).to.equal(entryPoint.address);
+      let isSupportedEntryPoint = await tokenPaymaster.isSupportedEntryPoint(entryPoint.address);
+      await expect(isSupportedEntryPoint).to.equal(true);
     });
   });
 
@@ -175,6 +202,51 @@ describe("TokenPaymaster", function () {
           .connect(alice)
           .setTokenPriceLimitMin(testToken.address, minPrice),
       ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+
+  describe("addSupportedEntryPoint", function () {
+    it("should revert if the caller is not owner", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      await expect(
+        tokenPaymaster.connect(alice).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should revert if the entryPoint has set", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      await expect(
+        tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address)
+      ).to.be.revertedWith("duplicate entrypoint");
+    });
+
+    it("should emit an event on RemoveSupportedEntryPoint", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+      expect(await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address))
+        .to.emit(tokenPaymaster, "RemoveSupportedEntryPoint").withArgs(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(false);
+    });
+
+    it("should emit an event on AddSupportedEntryPoint", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      await tokenPaymaster.connect(owner).removeSupportedEntryPoint(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address))
+        .to.emit(tokenPaymaster, "AddSupportedEntryPoint").withArgs(entryPoint.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(entryPoint.address)).to.equal(true);
+    });
+
+    it("should check correctly ", async function () {
+      const { owner, tokenPaymaster, alice, entryPoint } = await loadFixture(deploy);
+
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(alice.address)).to.equal(false);
+      await tokenPaymaster.connect(owner).addSupportedEntryPoint(alice.address);
+      expect(await tokenPaymaster.connect(owner).isSupportedEntryPoint(alice.address)).to.equal(true);
     });
   });
 
@@ -590,6 +662,7 @@ describe("TokenPaymaster", function () {
 
       expect(
         await tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),
@@ -612,6 +685,7 @@ describe("TokenPaymaster", function () {
       await tokenPaymasterWithEntryPoint.addToWhitelist(addresses);
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),
@@ -634,7 +708,7 @@ describe("TokenPaymaster", function () {
       await expect(
         tokenPaymasterWithEntryPoint
           .connect(alice)
-          .withdrawDepositNativeToken(alice.address, withdrawAmount),
+          .withdrawDepositNativeToken(entryPointContract.address, alice.address, withdrawAmount),
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
@@ -651,6 +725,7 @@ describe("TokenPaymaster", function () {
       await tokenPaymasterWithEntryPoint.addToWhitelist(addresses);
       await expect(
         tokenPaymasterWithEntryPoint.withdrawDepositNativeToken(
+          entryPointContract.address,
           alice.address,
           withdrawAmount,
         ),
@@ -685,4 +760,21 @@ describe("TokenPaymaster", function () {
         .withArgs(newPriceOracle.address);
     });
   });
+
+  describe("setSwapAdapter", function () {
+    it("should emit SetSwapAdapter", async function () {
+      const { owner, tokenPaymaster } =
+        await loadFixture(deploy);
+      expect(await tokenPaymaster.connect(owner).setSwapAdapter(owner.address)).to.emit(tokenPaymaster, "SwapAdapterSet").withArgs(owner.address);
+    });
+  });
+
+  describe("setSlippage", function () {
+    it("should emit SetSlippage", async function () {
+      const { owner, tokenPaymaster } =
+        await loadFixture(deploy);
+      expect(await tokenPaymaster.connect(owner).setSlippage(owner.address, 100)).to.emit(tokenPaymaster, "SlippageSet").withArgs(owner.address, 100);
+    });
+  });
+
 });

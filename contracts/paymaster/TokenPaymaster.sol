@@ -8,11 +8,13 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/ITokenPaymaster.sol";
 import "../interfaces/IPriceOracle.sol";
-import "../interfaces/IEntryPoint.sol";
+import "../@eth-infinitism-v0.6/interfaces/IEntryPoint.sol";
 import "../interfaces/ISwapAdapter.sol";
+import "./SupportedEntryPointLib.sol";
 
 contract TokenPaymaster is ITokenPaymaster, Ownable {
     using UserOperationLib for UserOperation;
+    using SupportedEntryPointLib for SupportedEntryPoint;
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -24,7 +26,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     mapping(address => uint256) public tokenPriceLimitMax;
     mapping(address => uint256) public tokenPriceLimitMin;
 
-    address public immutable supportedEntryPoint;
+    SupportedEntryPoint supportedEntryPoint;
     address public priceOracle;
     address public swapAdapter;
     mapping(address => bool) public whitelist;
@@ -38,22 +40,17 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         uint sigTime;
     }
 
-    constructor(
-        address _verifyingSigner,
-        address _owner,
-        address _supportedEntryPoint
-    ) {
+    constructor(address _verifyingSigner, address _owner) {
         verifyingSigner = _verifyingSigner;
-        supportedEntryPoint = _supportedEntryPoint;
         _transferOwnership(_owner);
         ADDRESS_THIS = address(this);
     }
 
     receive() external payable {}
 
-    modifier onlyEntryPoint() {
+    modifier validEntryPoint(address entrypoint) {
         require(
-            msg.sender == supportedEntryPoint,
+            supportedEntryPoint.isSupportedEntryPoint(entrypoint),
             "Not from supported entrypoint"
         );
         _;
@@ -62,6 +59,26 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     modifier onlyWhitelisted(address _address) {
         require(whitelist[_address], "Address is not whitelisted");
         _;
+    }
+
+    /// @dev add entryPoint to supported list;
+    /// @param entrypoint contract address
+    function addSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.addEntryPointToList(entrypoint);
+    }
+
+    /// @dev remove entryPoint from supported list;
+    /// @param entrypoint contract address
+    function removeSupportedEntryPoint(address entrypoint) external onlyOwner {
+        supportedEntryPoint.removeEntryPointToList(entrypoint);
+    }
+
+    /// @dev check entrypoint
+    /// @param entrypoint contract address
+    function isSupportedEntryPoint(
+        address entrypoint
+    ) external view returns (bool) {
+        return supportedEntryPoint.isSupportedEntryPoint(entrypoint);
     }
 
     function setTokenPriceLimitMax(
@@ -84,7 +101,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         PostOpMode,
         bytes calldata context,
         uint256 gasCost
-    ) external override onlyEntryPoint {
+    ) external override validEntryPoint(msg.sender) {
         (
             bytes32 userOpHash,
             address sender,
@@ -158,27 +175,26 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             exchangeRate = IPriceOracle(priceOracle).exchangeRate(token);
         }
 
-        if (sigValidate) {
-            return (
-                abi.encode(
-                    userOpHash,
-                    userOp.sender,
-                    token,
-                    exchangeRate,
-                    COST_OF_POST *
-                        (
-                            userOp.maxFeePerGas == userOp.maxPriorityFeePerGas
-                                ? userOp.maxFeePerGas
-                                : min(
-                                    userOp.maxFeePerGas,
-                                    userOp.maxPriorityFeePerGas + block.basefee
-                                )
-                        )
-                ),
-                sigTime
+        uint gasCost = COST_OF_POST *
+            (
+                userOp.maxFeePerGas == userOp.maxPriorityFeePerGas
+                    ? userOp.maxFeePerGas
+                    : min(
+                        userOp.maxFeePerGas,
+                        userOp.maxPriorityFeePerGas + block.basefee
+                    )
             );
+        bytes memory context = abi.encode(
+            userOpHash,
+            userOp.sender,
+            token,
+            exchangeRate,
+            gasCost
+        );
+        if (sigValidate) {
+            return (context, sigTime);
         } else {
-            return ("", SIG_VALIDATION_FAILED);
+            return (context, SIG_VALIDATION_FAILED);
         }
     }
 
@@ -186,7 +202,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         UserOperation calldata userOp,
         bytes32 userOpHash,
         uint256 requiredPreFund
-    ) external view override returns (bytes memory, uint256) {
+    ) external view returns (bytes memory, uint256) {
         address token = address(bytes20(userOp.paymasterAndData[20:40]));
         uint256 exchangeRate = uint256(bytes32(userOp.paymasterAndData[40:72]));
         uint256 sigTime = uint256(bytes32(userOp.paymasterAndData[72:104]));
@@ -238,19 +254,26 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
     }
 
     function withdrawDepositNativeToken(
+        address entryPoint,
         address payable withdrawAddress,
         uint256 amount
-    ) public onlyOwner onlyWhitelisted(withdrawAddress) {
-        IEntryPoint(supportedEntryPoint).withdrawTo(withdrawAddress, amount);
+    )
+        public
+        onlyOwner
+        onlyWhitelisted(withdrawAddress)
+        validEntryPoint(entryPoint)
+    {
+        IEntryPoint(entryPoint).withdrawTo(withdrawAddress, amount);
         emit Withdrawal(address(0), amount);
     }
 
     // ERC20 only
     function swapToNative(
+        address entryPoint,
         IERC20 token,
         uint256 amount,
         uint256 minAmountOut
-    ) external onlyOwner {
+    ) external onlyOwner validEntryPoint(entryPoint) {
         address nativeAddress = ISwapAdapter(payable(swapAdapter))
             .nativeToken();
 
@@ -278,9 +301,9 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
             "TokenPaymaster: insufficient amountOut"
         );
 
-        IEntryPoint(supportedEntryPoint).depositTo{
-            value: address(this).balance
-        }(address(this));
+        IEntryPoint(entryPoint).depositTo{value: address(this).balance}(
+            address(this)
+        );
 
         emit SwappedToNative(address(token), amount, balance);
     }
@@ -291,6 +314,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
 
     function setSwapAdapter(address _swapAdapter) external onlyOwner {
         swapAdapter = _swapAdapter;
+        emit SwapAdapterSet(_swapAdapter);
     }
 
     function setSlippage(
@@ -298,6 +322,7 @@ contract TokenPaymaster is ITokenPaymaster, Ownable {
         uint256 _slippage
     ) external virtual onlyOwner {
         slippages[_token] = _slippage;
+        emit SlippageSet(_token, _slippage);
     }
 
     function setPriceOracle(address _priceOracle) external onlyOwner {

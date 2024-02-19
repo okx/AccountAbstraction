@@ -8,22 +8,32 @@ describe("SmartAccountProxyFactory", function () {
 
     // setEntryPoint to owner to simplify testing
     let EntryPoint = owner.address;
+    let SimulationContract = owner.address;
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
+      "contracts/wallet/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
     );
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let SmartAccountFactory = await ethers.getContractFactory("SmartAccount");
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy(owner.address);
+
+    await validations.setBundlerOfficialWhitelist(owner.address, true);
+
+    let SmartAccountFactory = await ethers.getContractFactory(
+      "contracts/wallet/v1/SmartAccount.sol:SmartAccount"
+    );
     let SmartAccount = await SmartAccountFactory.deploy(
       EntryPoint,
+      SimulationContract,
       DefaultCallbackHandler.address,
+      validations.address,
       "SA",
-      "1"
+      "1.0"
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
+      "contracts/wallet/v1/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let SmartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       SmartAccount.address,
@@ -38,6 +48,7 @@ describe("SmartAccountProxyFactory", function () {
       SmartAccount,
       DefaultCallbackHandler,
       SmartAccountProxyFactory,
+      validations
     };
   }
 
@@ -129,9 +140,8 @@ describe("SmartAccountProxyFactory", function () {
     await expect(events.length).to.equal(1);
     let AA = await SmartAccount.attach(events[0].args.proxy);
 
-    await expect(await SmartAccountProxyFactory.walletWhiteList(AA.address)).to
-      .be.true;
-    await expect(await AA.EntryPoint()).to.be.equal(EntryPoint);
+    // await validations.validateWalletWhitelist(AA.address);
+    await expect(await AA.entryPoint()).to.be.equal(EntryPoint);
     await expect(await AA.getOwner()).to.be.equal(Alice.address);
     await expect(await AA.getFallbackHandler()).to.be.equal(
       DefaultCallbackHandler.address

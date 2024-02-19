@@ -2,18 +2,22 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const Utils = require("../Utils.js");
 
-describe("EntryPoint", function () {
+describe("BundlerDepositHelper", function () {
   async function deploy() {
     let [owner, bundler, bundlerTwo, bundlerThree] = await ethers.getSigners();
     let maxPrice = ethers.utils.parseEther("1");
-    let EntryPointFactory = await ethers.getContractFactory("MockEntryPointL1");
-    let EntryPoint = await EntryPointFactory.deploy(owner.address);
+    let EntryPointFactory = await ethers.getContractFactory("MockEntryPointV06");
+    let EntryPoint = await EntryPointFactory.deploy();
+
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy(owner.address);
+
 
     let BundlerDepositHelperFactory = await ethers.getContractFactory(
       "BundlerDepositHelper",
     );
     let BundlerDepositHelper = await BundlerDepositHelperFactory.deploy(
-      owner.address,
+      owner.address, validations.address
     );
 
     await BundlerDepositHelper.connect(owner).setValidEntryPoint(
@@ -21,17 +25,17 @@ describe("EntryPoint", function () {
       true,
     );
 
-    await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
+    await validations.connect(owner).setBundlerOfficialWhitelist(
       bundler.address,
       true,
     );
 
-    await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
+    await validations.connect(owner).setBundlerOfficialWhitelist(
       bundlerTwo.address,
       true,
     );
 
-    await EntryPoint.connect(owner).setBundlerOfficialWhitelist(
+    await validations.connect(owner).setBundlerOfficialWhitelist(
       bundlerThree.address,
       true,
     );

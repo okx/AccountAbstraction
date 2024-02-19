@@ -10,7 +10,34 @@ describe("TokenPaymaster", function () {
     let [owner, signer, alice] = await ethers.getSigners();
 
     let MockEntryPointL1 = await ethers.getContractFactory("MockEntryPointL1");
-    let entryPoint = await MockEntryPointL1.deploy(owner.address);
+    let EntryPointV06 = await ethers.getContractFactory(
+      "contracts/@eth-infinitism-v0.6/core/EntryPoint.sol:EntryPoint"
+    );
+    let entryPointSimulate = await MockEntryPointL1.deploy();
+    let entryPointV04 = await MockEntryPointL1.deploy();
+    let entryPointV06 = await EntryPointV06.deploy();
+
+    /// change version to switch entrypoint
+    let version = 2;
+    let entryPoint;
+
+    switch (version) {
+      case 0:
+        /// if test entryPointSimulate;
+        entryPoint = entryPointSimulate;
+        break;
+      case 1:
+        /// if test entryPointV04
+        entryPoint = entryPointV04;
+        break;
+      case 2:
+        /// if test entryPointV06 
+        entryPoint = entryPointV06;
+        break;
+      default:
+        entryPoint = entryPointV06;
+    }
+
 
     let MockWETH9 = await ethers.getContractFactory("WETH9");
 
@@ -63,12 +90,11 @@ describe("TokenPaymaster", function () {
     );
     let tokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      entryPoint.address
+      owner.address
     );
 
     await tokenPaymaster.connect(owner).setPriceOracle(priceOracle.address)
-
+    await tokenPaymaster.connect(owner).addSupportedEntryPoint(entryPoint.address);
 
     await priceOracle
       .connect(owner)
@@ -116,6 +142,7 @@ describe("TokenPaymaster", function () {
       userOpHelper,
       router,
       weth,
+      version
     };
   }
 
@@ -128,7 +155,7 @@ describe("TokenPaymaster", function () {
         priceOracle,
         router,
         testToken,
-        weth,
+        weth
       } = await loadFixture(deploy);
 
       let SwapHelperFactory = await ethers.getContractFactory(
@@ -148,7 +175,7 @@ describe("TokenPaymaster", function () {
 
       await tokenPaymaster
         .connect(owner)
-        .swapToNative(testToken.address, "200000000", 0);
+        .swapToNative(entryPoint.address, testToken.address, "200000000", 0);
       let balance = await ethers.provider.getBalance(tokenPaymaster.address);
       await expect(balance).to.equal(0);
 
@@ -186,7 +213,7 @@ describe("TokenPaymaster", function () {
       expect(
         await tokenPaymaster
           .connect(owner)
-          .swapToNative(testToken.address, "200000000", 0)
+          .swapToNative(entryPoint.address, testToken.address, "200000000", 0)
       )
         .to.emit(tokenPaymaster, "SwappedToNative")
         .withArgs(testToken.address, "200000000", "99690060900928177");

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "./IPaymaster.sol";
+import "../@eth-infinitism-v0.6/interfaces/IPaymaster.sol";
 
 interface IFreeGasPaymaster is IPaymaster {
     event AddedToWhitelist(address indexed account);

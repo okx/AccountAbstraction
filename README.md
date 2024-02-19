@@ -2,10 +2,25 @@
 
 ## Deployed Addresses
 
-Deployed on ETH, OKTC, BNB, POLYGON, OP, AVAX, ARBITRUM
+Deployed on ETH, OKTC, BNB, POLYGON, OP, AVAX, ARBITRUM, LINEA
 
 ### Core Contracts
 
+#### V2.0.0
+| Contracts                | Address                                      |
+| ------------------------ | -------------------------------------------- |
+| EntryPoint               | `0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789` |
+| TokenPaymaster           | `0xfb4f3F12258976395b34304e2BFD76D15E0Af44a` |
+| FreeGasPaymaster         | `0xF44F59E49dDC8c6F7A7DA1e1ec2a5B9d50536E5B` |
+| CirclePaymaster          | `0x9F47b0277B44d44AA9575c7F0E0e961651a27c9F` |
+| DefaultCallbackHandler   | `0xA0be66C8d60A3ca53E83b5f376C6259b8de02586` |
+| SmartAccount             | `0x5147CE3947a407c95687131Be01A2b8d55FD0A40` |
+| SmartAccountProxyFactory | `0x22fF1Dc5998258Faa1Ea45a776B57484f8Ab80A2` |
+| SimulateToken            | `0x6bfBc1134f64714aA0F481d01db7C821C9f5F3Dd` |
+| BundlerDepositHelper     | `0x0aB8356df7Fc47e890982b8401395184387A905A` |
+| Validations              | `0x228E505D1F21948968fB52794ea823f65053A294` |
+
+#### V1.0.0
 | Contracts                | Address                                      |
 | ------------------------ | -------------------------------------------- |
 | EntryPoint               | `0xdc5319815CdAaC2d113f7F275bc893ed7D9cA469` |
@@ -30,6 +45,7 @@ Deployed on ETH, OKTC, BNB, POLYGON, OP, AVAX, ARBITRUM
 | OP       | ChainlinkOracleAdapter | 0x7bB8FF337C5172E004C0dEca560c1c1bB7f7FF0A |
 | AVAX     | ChainlinkOracleAdapter | 0x7bB8FF337C5172E004C0dEca560c1c1bB7f7FF0A |
 | ARBITRUM | ChainlinkOracleAdapter | 0x7bB8FF337C5172E004C0dEca560c1c1bB7f7FF0A |
+| LINEA    | ChainlinkOracleAdapter | 0x7bB8FF337C5172E004C0dEca560c1c1bB7f7FF0A |
 
 ### Swap Helpers
 
@@ -42,3 +58,4 @@ Deployed on ETH, OKTC, BNB, POLYGON, OP, AVAX, ARBITRUM
 | OP       | UniSwapV3Adapter  | 0x1C821cD745924f2E008e2B6759c272a1736c6d8b |
 | AVAX     | TradeJoeV2Adapter | 0xE92E3568087D2999227c7a289eAf3c4a29c4CB90 |
 | ARBITRUM | UniSwapV3Adapter  | 0x1C821cD745924f2E008e2B6759c272a1736c6d8b |
+| LINEA    | UniSwapV3Adapter  | 0xef7CfC63c34b6D09b32E88da0d6483d92F017Cdc |

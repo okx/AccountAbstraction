@@ -10,6 +10,75 @@ let preVerificationGas = 0;
 let maxFeePerGas = 100000000;
 let maxPriorityFeePerGas = 100000000;
 
+async function getSigTime(sigTime, isV06 = false) {
+  if (sigTime == null || sigTime == 0) {
+    sigTime = ethers.BigNumber.from("281474976710655");
+  }
+
+  if(isV06) {
+    sigTime = sigTime.mul(ethers.BigNumber.from("2").pow(160));
+  }
+  return sigTime;
+}
+
+
+async function generateAccountV2(params) {
+  if (params.random == null) {
+    params.random = Math.floor(Math.random() * 1000001);
+  }
+
+  const nonce = 0;
+  // let initializeData = params.SmartAccount.interface.encodeFunctionData(
+  //   "initialize",
+  //   [params.owner.address, "0x"]
+  // );
+
+  let initializeData = ethers.utils.defaultAbiCoder.encode(
+    [ "address", "bytes" ], 
+    [ params.owner.address, "0x" ]
+  );
+
+  const sender = await params.SmartAccountProxyFactory.getAddress(
+    params.SmartAccount.address,
+    initializeData,
+    params.random
+  );
+
+  const data = params.SmartAccountProxyFactory.interface.encodeFunctionData(
+    "createAccount",
+    [params.SmartAccount.address, initializeData, params.random]
+  );
+
+  const initCode = ethers.utils.solidityPack(
+    ["address", "bytes"],
+    [params.SmartAccountProxyFactory.address, data]
+  );
+
+  let userOp = await generateSignedUOP({
+    sender: sender,
+    nonce: nonce,
+    initCode: initCode,
+    callData: "0x",
+    paymasterAndData: "0x",
+    owner: params.owner,
+    SmartAccount: params.SmartAccount,
+    EntryPoint: params.EntryPoint.address,
+    sigTime: params.sigTime,
+    sigType: params.sigType,
+  });
+
+  let tx = await params.owner.sendTransaction({
+    to: sender,
+    value: ethers.utils.parseEther("0.01"), // Sends exactly 1.0 ether
+  });
+  await tx.wait();
+
+  tx = await params.EntryPoint.connect(params.bundler).mockhandleOps([userOp]);
+  await tx.wait();
+
+  return sender;
+}
+
 async function generateAccount(params) {
   if (params.random == null) {
     params.random = Math.floor(Math.random() * 1000001);
@@ -110,7 +179,7 @@ async function generateSignedUOP(params) {
 async function generateFreePaymasterUOP(params, sender, nonce, callData) {
   if (params.sigTime == null || params.sigTime == 0) {
     params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x000000000000ffffffffffff0000000000000000000000000000000000000000"
     );
   }
   let userOp = await generateUOP(sender, nonce, "0x", callData, "0x");
@@ -134,7 +203,7 @@ async function generateFreePaymasterUOP(params, sender, nonce, callData) {
 async function generateFreePaymasterWithUOP(userOp, params) {
   if (params.sigTime == null || params.sigTime == 0) {
     params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "0x000000000000ffffffffffff0000000000000000000000000000000000000000"
     );
   }
   const paymastersignature = await params.signer.signMessage(
@@ -154,12 +223,8 @@ async function generateFreePaymasterWithUOP(userOp, params) {
   return userOp;
 }
 
-async function paymasterSign(params, userOp) {
-  if (params.sigTime == null || params.sigTime == 0) {
-    params.sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    );
-  }
+async function paymasterSign(params, userOp, isV06 = false) {
+  params.sigTime = await getSigTime(params.sigTime, isV06);
 
   const paymastersignature = await params.signer.signMessage(
     ethers.utils.arrayify(
@@ -245,11 +310,7 @@ async function generateSignature(
   sigTime,
   sigType
 ) {
-  if (sigTime == null || sigTime == 0) {
-    sigTime = ethers.BigNumber.from(
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-    );
-  }
+  sigTime = await getSigTime(sigTime);
 
   if (sigType == null || sigType == 0) {
     sigType = ethers.BigNumber.from("0");
@@ -382,10 +443,66 @@ async function deploy(owner, DeployFactory, SmartAccount, salt) {
   );
 }
 
+
+async function generateUOPWithManualGasLimit(
+  sender,
+  nonce,
+  initCode,
+  callData,
+  paymasterAndData,
+  manualVerificationGasLimit,
+  manualPreVerificationGas,
+  manualCallGasLimit
+) {
+
+  let userOp = {
+    sender: sender,
+    nonce: nonce,
+    initCode: initCode,
+    callData: callData,
+    callGasLimit: manualCallGasLimit !== null ? manualCallGasLimit : callGasLimit,
+    verificationGasLimit: manualVerificationGasLimit !== null ? manualVerificationGasLimit : verificationGasLimit,
+    preVerificationGas: manualPreVerificationGas !== null ? manualPreVerificationGas : preVerificationGas,
+    maxFeePerGas: maxFeePerGas,
+    maxPriorityFeePerGas: maxPriorityFeePerGas,
+    paymasterAndData: paymasterAndData,
+    signature: "0x",
+  };
+
+  return userOp;
+}
+
+async function generateSignedUOPWithManualGasLimit(params) {
+  let userOp = await generateUOPWithManualGasLimit(
+    params.sender,
+    params.nonce,
+    params.initCode,
+    params.callData,
+    params.paymasterAndData,
+    params.manualVerificationGasLimit,
+    params.manualPreVerificationGas,
+    params.manualCallGasLimit
+  );
+
+  userOp.signature = await generateSignature(
+    params.owner,
+    params.SmartAccount,
+    params.EntryPoint,
+    userOp,
+    params.sigTime,
+    params.sigType
+  );
+
+  return userOp;
+}
+
+
+
 module.exports = {
   generateAccount,
   generateUOP,
   generateSignedUOP,
+  generateSignedUOPWithManualGasLimit,
   generateNUOP,
   generateNSignedUOP,
   generateFreePaymasterUOP,
@@ -397,4 +514,6 @@ module.exports = {
   deploy,
   getDeployFactory,
   createDeployFactory,
+  getSigTime,
+  generateAccountV2
 };

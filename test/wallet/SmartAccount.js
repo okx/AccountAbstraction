@@ -8,22 +8,32 @@ describe("SmartAccount", function () {
 
     // setEntryPoint to owner to simplify testing
     let EntryPoint = owner.address;
+    let SimulationContract = owner.address;
 
     let DefaultCallbackHandlerFactory = await ethers.getContractFactory(
-      "DefaultCallbackHandler"
+      "contracts/wallet/handler/DefaultCallbackHandler.sol:DefaultCallbackHandler"
     );
     let DefaultCallbackHandler = await DefaultCallbackHandlerFactory.deploy();
 
-    let SmartAccountFactory = await ethers.getContractFactory("SmartAccount");
+    let Validations = await ethers.getContractFactory("Validations");
+    let validations = await Validations.deploy(owner.address);
+
+    await validations.setBundlerOfficialWhitelist(owner.address, true);
+
+    let SmartAccountFactory = await ethers.getContractFactory(
+      "contracts/wallet/v1/SmartAccount.sol:SmartAccount"
+    );
     let SmartAccount = await SmartAccountFactory.deploy(
       EntryPoint,
+      SimulationContract,
       DefaultCallbackHandler.address,
+      validations.address,
       "SA",
       "1.0"
     );
 
     let SmartAccountProxysFactory = await ethers.getContractFactory(
-      "SmartAccountProxyFactory"
+      "contracts/wallet/v1/SmartAccountProxyFactory.sol:SmartAccountProxyFactory"
     );
     let SmartAccountProxyFactory = await SmartAccountProxysFactory.deploy(
       SmartAccount.address,
@@ -46,7 +56,7 @@ describe("SmartAccount", function () {
     let AA = await SmartAccount.attach(events[0].args.proxy);
 
     let SmartAccountProxy = await ethers.getContractFactory(
-      "SmartAccountProxy"
+      "contracts/wallet/v1/SmartAccountProxy.sol:SmartAccountProxy"
     );
     let AAProxy = await SmartAccountProxy.attach(AA.address);
 
@@ -96,10 +106,10 @@ describe("SmartAccount", function () {
       let owner = await AA.getOwner();
       await expect(owner).to.equal(Alice.address);
 
-      let etryPoint = await AA.EntryPoint();
+      let etryPoint = await AA.entryPoint();
       await expect(EntryPoint).to.equal(EntryPoint);
 
-      let fallbackHandler = await AA.FallbackHandler();
+      let fallbackHandler = await AA.FALLBACKHANDLER();
       await expect(fallbackHandler).to.equal(DefaultCallbackHandler.address);
     });
 
@@ -121,21 +131,19 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
 
-      let tx = await AA.validateUserOp(
-        userOp,
-        userOpHash,
-        ethers.constants.AddressZero,
-        0
-      );
+      let tx = await AA.validateUserOp(userOp, userOpHash, 0);
       let receipt = await tx.wait();
 
       await expect(receipt.status).to.equal(1);
@@ -159,21 +167,19 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
 
-      let tx = await AA.validateUserOp(
-        userOp,
-        userOpHash,
-        ethers.constants.AddressZero,
-        0
-      );
+      let tx = await AA.validateUserOp(userOp, userOpHash, 0);
       let receipt = await tx.wait();
 
       await expect(receipt.status).to.equal(1);
@@ -197,11 +203,14 @@ describe("SmartAccount", function () {
 
       let userOpHash = await UserOpHelper.getUserOpHash(userOp, EntryPoint);
 
-      let deadlineExtracted = await AA.callStatic.validateUserOp(
+      let validateData = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
+      );
+
+      let deadlineExtracted = await validateData.div(
+        ethers.BigNumber.from(2).pow(160)
       );
 
       await expect(deadlineExtracted.toNumber()).to.equal(123456);
@@ -228,7 +237,6 @@ describe("SmartAccount", function () {
       let deadlineExtracted = await AA.callStatic.validateUserOp(
         userOp,
         userOpHash,
-        ethers.constants.AddressZero,
         0
       );
 

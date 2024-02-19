@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.12;
-import "../common/SelfAuthorized.sol";
 
 /// @title SelfAuthorized - authorizes current contract to perform actions
 /// @author Richard Meissner - <richard@gnosis.pm>

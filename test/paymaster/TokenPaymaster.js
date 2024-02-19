@@ -37,11 +37,11 @@ describe("TokenPaymaster", function () {
     );
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     await TokenPaymaster.connect(owner).setTokenPriceLimitMax(
       TestToken.address,
@@ -68,7 +68,7 @@ describe("TokenPaymaster", function () {
     );
 
     let UserOpHelperFactory = await ethers.getContractFactory(
-      "UserOperationHelper",
+      "UserOperationHelper"
     );
     let UserOpHelper = await UserOpHelperFactory.deploy(
       TokenPaymaster.address,
@@ -121,8 +121,8 @@ describe("TokenPaymaster", function () {
     );
     await expect(minTokenPrice).to.equal(minPrice);
 
-    let defaultEntryPoint = await TokenPaymaster.supportedEntryPoint();
-    await expect(defaultEntryPoint).to.equal(EntryPoint.address);
+    let isSupportedEntryPoint = await TokenPaymaster.isSupportedEntryPoint(EntryPoint.address);
+    await expect(isSupportedEntryPoint).to.equal(true);
   });
 
   it("should validatePaymasterUserOp", async function () {
@@ -340,7 +340,7 @@ describe("TokenPaymaster", function () {
       await loadFixture(deploy);
 
     let EntryPointFactory = await ethers.getContractFactory("MockEntryPointL1");
-    let EntryPoint = await EntryPointFactory.deploy(owner.address);
+    let EntryPoint = await EntryPointFactory.deploy();
 
     let TokenPaymasterFactory = await ethers.getContractFactory(
       "TokenPaymaster",
@@ -348,11 +348,11 @@ describe("TokenPaymaster", function () {
 
     let TokenPaymaster = await TokenPaymasterFactory.deploy(
       signer.address,
-      owner.address,
-      EntryPoint.address,
+      owner.address
     );
 
     await TokenPaymaster.connect(owner).setPriceOracle(PriceOracle.address);
+    await TokenPaymaster.connect(owner).addSupportedEntryPoint(EntryPoint.address);
 
     // Deploy Mock UniswapV2Router
     let MockUniswapV2RouterFactory = await ethers.getContractFactory(
@@ -386,6 +386,7 @@ describe("TokenPaymaster", function () {
     await TokenPaymaster.connect(owner).setSwapAdapter(SwapHelper.address);
 
     await TokenPaymaster.connect(owner).swapToNative(
+      EntryPoint.address,
       TestToken.address,
       1000000,
       0,
