@@ -10,7 +10,7 @@ import "hardhat-contract-sizer";
 
 dotenv.config();
 
-const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"];
+const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [""];
 const config: HardhatUserConfig = {
   contractSizer: {
     alphaSort: false,
@@ -170,7 +170,7 @@ const config: HardhatUserConfig = {
     outDir: "types",
   },
   etherscan: {
-        apiKey: "ZIUTQ9YE4WRWYHECBKRCA57XCUT2T8VW81",
+        apiKey: "",
         customChains: [
             {
                 network: "ETH",
@@ -182,13 +182,6 @@ const config: HardhatUserConfig = {
             }
         ]
     }
-  // etherscan: {
-  //   apiKey: "3AXXKUZC7RQWVPRWZ2CZJ2HV6PB1RSKDQM"
-  //   // eth
-  //   // "ZIUTQ9YE4WRWYHECBKRCA57XCUT2T8VW81"
-  //   // polygon
-  //   // "MJMBRAPTDNIJKSCVRUC8C6RRMWAW7WIKKS"
-  // },
 };
 
 export default config;
